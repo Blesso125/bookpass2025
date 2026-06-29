@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YVCKSHFTY3"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YVCKSHFTY3');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check In - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* Additional styles for checkin */
+        .checkin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .form-card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            color: #333;
+        }
+        .search-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            flex: 2;
+            position: relative;
+        }
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-controls select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        .checkouts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .checkout-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .checkout-card.overdue {
+            border-left: 4px solid #e74c3c;
+            background: #fff5f5;
+        }
+        .checkout-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .borrower-info h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        .borrower-info p {
+            margin: 3px 0;
+            font-size: 13px;
+            color: #666;
+        }
+        .borrower-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .borrower-badge.student {
+            background: #d4edda;
+            color: #155724;
+        }
+        .borrower-badge.teacher {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .borrower-badge.class-monitor {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .due-status {
+            text-align: right;
+        }
+        .due-date {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .due-date.overdue {
+            color: #e74c3c;
+        }
+        .due-date.active {
+            color: #27ae60;
+        }
+        .days-left {
+            font-size: 12px;
+            color: #666;
+        }
+        .books-list {
+            margin: 15px 0;
+        }
+        .book-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .book-info {
+            flex: 1;
+        }
+        .book-title {
+            font-weight: 500;
+            color: #333;
+        }
+        .book-author {
+            font-size: 12px;
+            color: #666;
+        }
+        .book-quantity {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .checkin-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+        .btn-primary, .btn-secondary, .btn-danger {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        .checkin-details {
+            margin-bottom: 20px;
+        }
+        .checkin-details p {
+            margin: 8px 0;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .bulk-books-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .bulk-book-item {
+            padding: 5px 0;
+            font-size: 13px;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+        .notification.success {
+            background: #27ae60;
+            color: white;
+        }
+        .notification.error {
+            background: #e74c3c;
+            color: white;
+        }
+        .notification.info {
+            background: #3498db;
+            color: white;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 20px;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            .search-options {
+                flex-direction: column;
+            }
+            .filter-controls {
+                flex-direction: column;
+            }
+            .checkout-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .due-status {
+                text-align: left;
+            }
+            .book-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body class="app-body">
+    <aside class="sidebar-nav" id="sidebarNav">
+        <a href="dashboard.html" class="sidebar-brand">
+            <i class="fas fa-book-open"></i>
+            <h1>BookPass</h1>
+        </a>
+        
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <li>
+                <a href="dashboard.html">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="inventory.html">
+                    <i class="fas fa-book"></i>
+                    Inventory
+                </a>
+            </li>
+            <li>
+                <a href="checkout.html">
+                    <i class="fas fa-hand-holding"></i>
+                    Check Out
+                </a>
+            </li>
+            <li class="active">
+                <a href="checkin.html">
+                    <i class="fas fa-undo"></i>
+                    Check In
+                </a>
+            </li>
+            <li>
+                <a href="analytics.html">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+            </li>
+            <li>
+                <a href="admin.html">
+                    <i class="fas fa-cog"></i>
+                    Admin
+                </a>
+            </li>
+            <li>
+                <a href="about.html">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+            </li>
+            <li>
+                <a href="update-status.html">
+                    <i class="fas fa-sync-alt"></i>
+                    Update Status
+                </a>
+            </li>
+            <li>
+                <a href="contact.html">
+                    <i class="fas fa-headset"></i>
+                    Support
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <button id="sidebarToggleBtn" class="navbar-toggle-btn" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1>Check In Books</h1>
+        </header>
+
+        <div class="checkin-container">
+            <div class="search-section">
+                <div class="form-card">
+                    <h2>Find Checked Out Books</h2>
+                    <div class="search-options">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="checkinSearch" placeholder="Search by borrower name, ID, book title, or author...">
+                        </div>
+                        <div class="filter-controls">
+                            <select id="statusFilter">
+                                <option value="">All Checkouts</option>
+                                <option value="active">Active</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                            <select id="typeFilter">
+                                <option value="">All Types</option>
+                                <option value="student">Student</option>
+                                <option value="teacher">Teacher</option>
+                                <option value="class-monitor">Class Monitor</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkouts-section">
+                <div id="checkoutsList" class="checkouts-list">
+                    <div class="empty-state">Loading checkouts...</div>
+                </div>
+
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <i class="fas fa-clipboard-check"></i>
+                    <h3>No Checkouts Found</h3>
+                    <p>There are no books currently checked out that match your search.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check-in Confirmation Modal -->
+        <div id="checkinModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Confirm Check-in</h2>
+                    <button class="close-btn" onclick="closeCheckinModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="checkinDetails" class="checkin-details">
+                        <!-- Check-in details will be populated here -->
+                    </div>
+                    <div class="form-group">
+                        <label for="checkinNotes">Return Notes</label>
+                        <textarea id="checkinNotes" rows="3" placeholder="Any notes about the book's condition or return..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCheckinModal()">Cancel</button>
+                    <button type="button" id="confirmCheckinBtn" class="btn-primary">
+                        <i class="fas fa-check"></i>
+                        Confirm Check-in
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Check-in Modal -->
+        <div id="bulkCheckinModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Bulk Check-in</h2>
+                    <button class="close-btn" onclick="closeBulkCheckinModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>You are about to check in <strong id="bulkCount">0</strong> books. This action cannot be undone.</p>
+                    <div id="bulkBooksList" class="bulk-books-list">
+                        <!-- Bulk books will be listed here -->
+                    </div>
+                    <div class="form-group">
+                        <label for="bulkNotes">Bulk Return Notes</label>
+                        <textarea id="bulkNotes" rows="3" placeholder="Notes for all returns..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeBulkCheckinModal()">Cancel</button>
+                    <button type="button" id="confirmBulkCheckinBtn" class="btn-primary">
+                        <i class="fas fa-check"></i>
+                        Check In All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwt_EgdIgG2hMDAhleQgBgu5DjeXImWtQ",
+            authDomain: "bookpass-4aff4.firebaseapp.com",
+            projectId: "bookpass-4aff4",
+            storageBucket: "bookpass-4aff4.firebasestorage.app",
+            messagingSenderId: "833394499791",
+            appId: "1:833394499791:web:6666de0f66162f85a017ba"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // Global variables
+        let allCheckouts = [];
+        let selectedCheckout = null;
+        let selectedBulkCheckouts = [];
+        
+        // ============================================
+        // AUTH CHECK
+        // ============================================
+        auth.onAuthStateChanged(function(user) {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                console.log("User logged in:", user.email);
+                loadActiveCheckouts();
+            }
+        });
+        
+        // ============================================
+        // LOAD ACTIVE CHECKOUTS
+        // ============================================
+        async function loadActiveCheckouts() {
+            const container = document.getElementById('checkoutsList');
+            container.innerHTML = '<div class="empty-state">Loading checkouts...</div>';
+            
+            try {
+                // Get all checkouts that are not returned
+                const snapshot = await db.collection('checkouts')
+                    .where('returned', '==', false)
+                    .get();
+                
+                allCheckouts = [];
+                
+                for (const doc of snapshot.docs) {
+                    const data = doc.data();
+                    
+                    // Determine borrower type and name
+                    let borrowerName = '';
+                    let borrowerId = '';
+                    let borrowerType = '';
+                    
+                    if (data.borrower) {
+                        borrowerName = data.borrower.name || 'Unknown';
+                        borrowerId = data.borrower.id || data.borrower.studentId || '';
+                        borrowerType = data.borrower.type || '';
+                    } else if (data.borrowerType) {
+                        borrowerType = data.borrowerType;
+                        borrowerName = data.borrowerName || 'Unknown';
+                        borrowerId = data.borrowerID || '';
+                    }
+                    
+                    // Get book info
+                    let bookTitle = data.bookTitle || 'Unknown Book';
+                    let bookAuthor = data.bookAuthor || 'Unknown Author';
+                    
+                    // If bookId exists, try to get latest info from books collection
+                    if (data.bookId) {
+                        const bookDoc = await db.collection('books').doc(data.bookId).get();
+                        if (bookDoc.exists) {
+                            const bookData = bookDoc.data();
+                            bookTitle = bookData.title || bookTitle;
+                            bookAuthor = bookData.author || bookAuthor;
+                        }
+                    }
+                    
+                    const dueDate = data.dueDate ? new Date(data.dueDate) : null;
+                    const isOverdue = dueDate && dueDate < new Date() && !data.returned;
+                    
+                    allCheckouts.push({
+                        id: doc.id,
+                        borrowerName: borrowerName,
+                        borrowerId: borrowerId,
+                        borrowerType: borrowerType,
+                        bookId: data.bookId,
+                        bookTitle: bookTitle,
+                        bookAuthor: bookAuthor,
+                        quantity: data.quantity || 1,
+                        dueDate: data.dueDate,
+                        checkoutDate: data.checkoutDate,
+                        notes: data.notes || '',
+                        isOverdue: isOverdue,
+                        data: data
+                    });
+                }
+                
+                console.log("Active checkouts loaded:", allCheckouts.length);
+                renderCheckouts();
+                
+            } catch (error) {
+                console.error('Error loading checkouts:', error);
+                container.innerHTML = '<div class="empty-state">Error loading checkouts. Please refresh.</div>';
+            }
+        }
+        
+        function renderCheckouts() {
+            const container = document.getElementById('checkoutsList');
+            
+            // Apply filters
+            const searchTerm = document.getElementById('checkinSearch')?.value.toLowerCase() || '';
+            const statusFilter = document.getElementById('statusFilter')?.value || '';
+            const typeFilter = document.getElementById('typeFilter')?.value || '';
+            
+            let filtered = [...allCheckouts];
+            
+            // Search filter
+            if (searchTerm) {
+                filtered = filtered.filter(c => 
+                    c.borrowerName.toLowerCase().includes(searchTerm) ||
+                    c.borrowerId.toLowerCase().includes(searchTerm) ||
+                    c.bookTitle.toLowerCase().includes(searchTerm) ||
+                    c.bookAuthor.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Status filter
+            if (statusFilter === 'active') {
+                filtered = filtered.filter(c => !c.isOverdue);
+            } else if (statusFilter === 'overdue') {
+                filtered = filtered.filter(c => c.isOverdue);
+            }
+            
+            // Type filter
+            if (typeFilter) {
+                filtered = filtered.filter(c => c.borrowerType === typeFilter);
+            }
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-check"></i>
+                        <h3>No Checkouts Found</h3>
+                        <p>There are no books currently checked out that match your search.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group by borrower for better display
+            const groupedByBorrower = {};
+            filtered.forEach(checkout => {
+                const key = `${checkout.borrowerId}_${checkout.borrowerType}`;
+                if (!groupedByBorrower[key]) {
+                    groupedByBorrower[key] = {
+                        borrowerName: checkout.borrowerName,
+                        borrowerId: checkout.borrowerId,
+                        borrowerType: checkout.borrowerType,
+                        checkouts: []
+                    };
+                }
+                groupedByBorrower[key].checkouts.push(checkout);
+            });
+            
+            container.innerHTML = Object.values(groupedByBorrower).map(group => {
+                const firstCheckout = group.checkouts[0];
+                const dueDate = firstCheckout.dueDate ? new Date(firstCheckout.dueDate) : null;
+                const isOverdue = firstCheckout.isOverdue;
+                const daysRemaining = dueDate ? Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                
+                // Get borrower badge class
+                let badgeClass = 'student';
+                let badgeIcon = 'fa-user-graduate';
+                if (group.borrowerType === 'teacher') {
+                    badgeClass = 'teacher';
+                    badgeIcon = 'fa-chalkboard-user';
+                } else if (group.borrowerType === 'class-monitor' || group.borrowerType === 'class-captain') {
+                    badgeClass = 'class-monitor';
+                    badgeIcon = 'fa-users';
+                }
+                
+                // Calculate total books
+                const totalBooks = group.checkouts.reduce((sum, c) => sum + (c.quantity || 1), 0);
+                
+                return `
+                    <div class="checkout-card ${isOverdue ? 'overdue' : ''}">
+                        <div class="checkout-header">
+                            <div class="borrower-info">
+                                <h3>
+                                    <i class="fas ${badgeIcon}"></i> 
+                                    ${escapeHtml(group.borrowerName)}
+                                </h3>
+                                <p><strong>ID:</strong> ${escapeHtml(group.borrowerId)}</p>
+                                <p><strong>Type:</strong> <span class="borrower-badge ${badgeClass}">${escapeHtml(group.borrowerType || 'Student')}</span></p>
+                                <p><strong>Books Checked Out:</strong> ${totalBooks}</p>
+                            </div>
+                            <div class="due-status">
+                                <div class="due-date ${isOverdue ? 'overdue' : 'active'}">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Due: ${dueDate ? dueDate.toLocaleDateString() : 'N/A'}
+                                </div>
+                                ${daysRemaining !== null && !isOverdue ? `
+                                    <div class="days-left">
+                                        <i class="fas fa-hourglass-half"></i>
+                                        ${daysRemaining} days remaining
+                                    </div>
+                                ` : ''}
+                                ${isOverdue ? `
+                                    <div class="days-left" style="color: #e74c3c;">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        OVERDUE
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="books-list">
+                            <strong><i class="fas fa-book"></i> Borrowed Books:</strong>
+                            ${group.checkouts.map(checkout => `
+                                <div class="book-item">
+                                    <div class="book-info">
+                                        <div class="book-title">${escapeHtml(checkout.bookTitle)}</div>
+                                        <div class="book-author">by ${escapeHtml(checkout.bookAuthor)}</div>
+                                    </div>
+                                    ${checkout.quantity > 1 ? `<span class="book-quantity">${checkout.quantity} copies</span>` : ''}
+                                    <button class="btn-primary btn-sm" onclick="prepareCheckin('${checkout.id}')">
+                                        <i class="fas fa-undo"></i> Check In
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="checkin-actions">
+                            <button class="btn-secondary" onclick="prepareBulkCheckin('${group.borrowerId}', '${group.borrowerType}')">
+                                <i class="fas fa-check-double"></i> Check In All for ${escapeHtml(group.borrowerName)}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // ============================================
+        // CHECK-IN FUNCTIONS
+        // ============================================
+        async function prepareCheckin(checkoutId) {
+            const checkout = allCheckouts.find(c => c.id === checkoutId);
+            if (!checkout) {
+                showNotification('Checkout record not found', 'error');
+                return;
+            }
+            
+            selectedCheckout = checkout;
+            
+            const dueDate = checkout.dueDate ? new Date(checkout.dueDate) : null;
+            const isOverdue = dueDate && dueDate < new Date();
+            
+            const modalBody = document.getElementById('checkinDetails');
+            modalBody.innerHTML = `
+                <p><strong>Borrower:</strong> ${escapeHtml(checkout.borrowerName)}</p>
+                <p><strong>Borrower ID:</strong> ${escapeHtml(checkout.borrowerId)}</p>
+                <p><strong>Borrower Type:</strong> ${escapeHtml(checkout.borrowerType || 'Student')}</p>
+                <p><strong>Book:</strong> ${escapeHtml(checkout.bookTitle)}</p>
+                <p><strong>Author:</strong> ${escapeHtml(checkout.bookAuthor)}</p>
+                ${checkout.quantity > 1 ? `<p><strong>Quantity:</strong> ${checkout.quantity} copies</p>` : ''}
+                <p><strong>Checkout Date:</strong> ${checkout.checkoutDate ? new Date(checkout.checkoutDate).toLocaleDateString() : 'N/A'}</p>
+                <p><strong>Due Date:</strong> ${dueDate ? dueDate.toLocaleDateString() : 'N/A'}</p>
+                ${isOverdue ? '<p style="color: #e74c3c;"><strong>⚠️ This book is OVERDUE</strong></p>' : ''}
+            `;
+            
+            document.getElementById('checkinNotes').value = '';
+            document.getElementById('checkinModal').style.display = 'flex';
+        }
+        
+        async function confirmCheckin() {
+            if (!selectedCheckout) return;
+            
+            const notes = document.getElementById('checkinNotes').value;
+            
+            const confirmBtn = document.getElementById('confirmCheckinBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            try {
+                const checkoutRef = db.collection('checkouts').doc(selectedCheckout.id);
+                
+                // Update checkout record
+                await checkoutRef.update({
+                    returned: true,
+                    returnedDate: new Date().toISOString(),
+                    returnNotes: notes
+                });
+                
+                // Update book availability
+                if (selectedCheckout.bookId) {
+                    const bookRef = db.collection('books').doc(selectedCheckout.bookId);
+                    const bookDoc = await bookRef.get();
+                    if (bookDoc.exists) {
+                        const currentAvailable = bookDoc.data().availableCopies || 0;
+                        const quantity = selectedCheckout.quantity || 1;
+                        await bookRef.update({
+                            availableCopies: currentAvailable + quantity
+                        });
+                    }
+                }
+                
+                showNotification(`Successfully checked in "${selectedCheckout.bookTitle}"`, 'success');
+                closeCheckinModal();
+                await loadActiveCheckouts(); // Refresh the list
+                
+            } catch (error) {
+                console.error('Error checking in:', error);
+                showNotification('Error checking in book: ' + error.message, 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-check"></i> Confirm Check-in';
+            }
+        }
+        
+        // ============================================
+        // BULK CHECK-IN FUNCTIONS
+        // ============================================
+        async function prepareBulkCheckin(borrowerId, borrowerType) {
+            selectedBulkCheckouts = allCheckouts.filter(c => 
+                c.borrowerId === borrowerId && c.borrowerType === borrowerType
+            );
+            
+            if (selectedBulkCheckouts.length === 0) {
+                showNotification('No active checkouts found for this borrower', 'error');
+                return;
+            }
+            
+            const totalBooks = selectedBulkCheckouts.reduce((sum, c) => sum + (c.quantity || 1), 0);
+            
+            document.getElementById('bulkCount').textContent = totalBooks;
+            document.getElementById('bulkBooksList').innerHTML = selectedBulkCheckouts.map(c => `
+                <div class="bulk-book-item">
+                    📚 ${escapeHtml(c.bookTitle)} ${c.quantity > 1 ? `(x${c.quantity})` : ''}
+                </div>
+            `).join('');
+            document.getElementById('bulkNotes').value = '';
+            document.getElementById('bulkCheckinModal').style.display = 'flex';
+        }
+        
+        async function confirmBulkCheckin() {
+            if (selectedBulkCheckouts.length === 0) return;
+            
+            const notes = document.getElementById('bulkNotes').value;
+            
+            const confirmBtn = document.getElementById('confirmBulkCheckinBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            try {
+                for (const checkout of selectedBulkCheckouts) {
+                    try {
+                        const checkoutRef = db.collection('checkouts').doc(checkout.id);
+                        
+                        await checkoutRef.update({
+                            returned: true,
+                            returnedDate: new Date().toISOString(),
+                            returnNotes: notes
+                        });
+                        
+                        if (checkout.bookId) {
+                            const bookRef = db.collection('books').doc(checkout.bookId);
+                            const bookDoc = await bookRef.get();
+                            if (bookDoc.exists) {
+                                const currentAvailable = bookDoc.data().availableCopies || 0;
+                                const quantity = checkout.quantity || 1;
+                                await bookRef.update({
+                                    availableCopies: currentAvailable + quantity
+                                });
+                            }
+                        }
+                        successCount++;
+                    } catch (err) {
+                        errorCount++;
+                        console.error(`Error checking in ${checkout.bookTitle}:`, err);
+                    }
+                }
+                
+                if (successCount > 0) {
+                    showNotification(`Successfully checked in ${successCount} book(s)`, 'success');
+                }
+                if (errorCount > 0) {
+                    showNotification(`Failed to check in ${errorCount} book(s)`, 'error');
+                }
+                
+                closeBulkCheckinModal();
+                await loadActiveCheckouts();
+                
+            } catch (error) {
+                console.error('Error in bulk checkin:', error);
+                showNotification('Error during bulk check-in', 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-check"></i> Check In All';
+            }
+        }
+        
+        // ============================================
+        // MODAL FUNCTIONS
+        // ============================================
+        function closeCheckinModal() {
+            document.getElementById('checkinModal').style.display = 'none';
+            selectedCheckout = null;
+        }
+        
+        function closeBulkCheckinModal() {
+            document.getElementById('bulkCheckinModal').style.display = 'none';
+            selectedBulkCheckouts = [];
+        }
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function showNotification(message, type) {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        document.getElementById('checkinSearch')?.addEventListener('input', () => renderCheckouts());
+        document.getElementById('statusFilter')?.addEventListener('change', () => renderCheckouts());
+        document.getElementById('typeFilter')?.addEventListener('change', () => renderCheckouts());
+        document.getElementById('confirmCheckinBtn')?.addEventListener('click', confirmCheckin);
+        document.getElementById('confirmBulkCheckinBtn')?.addEventListener('click', confirmBulkCheckin);
+        
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            auth.signOut().then(() => window.location.href = 'index.html');
+        });
+        
+        // Make functions global
+        window.prepareCheckin = prepareCheckin;
+        window.prepareBulkCheckin = prepareBulkCheckin;
+        window.closeCheckinModal = closeCheckinModal;
+        window.closeBulkCheckinModal = closeBulkCheckinModal;
+    </script>
+    <script src="scripts/navigation.js"></script>
+    <script src="scripts/syncCoordinator.js"></script>
+    <script>
+        // ============================================
+        // OFFLINE MODE AND AUTO-SYNC SETUP
+        // ============================================
+        
+        // Handle connection restoration - trigger automatic sync
+        window.addEventListener('online', async function() {
+            console.log('📡 Connection restored on Check-In page');
+            showNotification('Connection restored - syncing offline transactions...', 'info');
+            
+            // Trigger sync through storage manager
+            if (window.storageManager && window.storageManager.isOnline()) {
+                try {
+                    const result = await window.storageManager.processOfflineActions();
+                    if (result.success > 0) {
+                        showNotification(`Synced ${result.success} offline check-ins to Firebase ✓`, 'success');
+                        // Refresh the checkout list
+                        await loadActiveCheckouts();
+                    }
+                    if (result.failed > 0) {
+                        showNotification(`Warning: ${result.failed} check-ins pending sync`, 'warning');
+                    }
+                } catch (error) {
+                    console.error('Sync error:', error);
+                    showNotification('Sync failed - will retry automatically', 'error');
+                }
+            }
+            
+            // Update UI indicators if syncCoordinator is available
+            if (window.syncCoordinator) {
+                window.syncCoordinator.updateAllManagerStatus();
+            }
+        });
+        
+        // Handle connection loss
+        window.addEventListener('offline', function() {
+            console.log('🔴 Connection lost on Check-In page');
+            showNotification('Connection lost - switched to offline mode', 'warning');
+        });
+        
+        // Setup periodic auto-sync (every 30 seconds when online with pending actions)
+        setInterval(async function() {
+            if (window.storageManager && window.navigator.onLine) {
+                const status = window.storageManager.getOfflineSyncStatus();
+                if (status.hasPendingActions && !status.isOfflineMode) {
+                    try {
+                        const result = await window.storageManager.processOfflineActions();
+                        if (result.success > 0) {
+                            console.log(`Auto-synced ${result.success} check-ins to Firebase`);
+                            await loadActiveCheckouts();
+                        }
+                    } catch (error) {
+                        console.error('Auto-sync error:', error);
+                    }
+                }
+            }
+        }, 30000);
+    </script></body>
+</html>

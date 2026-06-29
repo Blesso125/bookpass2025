@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LMS | Local Library Management</title>
+    <link rel="icon" type="image/png" href="images/book.png">
+    <style>
+        :root { --primary: #1a73e8; --bg: #f8f9fa; --text: #202124; --success: #34a853; --danger: #ea4335; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 40px; display: flex; gap: 30px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); flex: 1; }
+        h1, h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eef; padding-bottom: 10px; }
+        .status-badge { padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; margin-bottom: 20px; border: 2px dashed #ccc; }
+        .online { border-color: var(--success); color: var(--success); background: #e6f4ea; }
+        .form-group { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; transition: 0.3s; opacity: 0.4; pointer-events: none; }
+        .form-active { opacity: 1; pointer-events: auto; }
+        input { padding: 12px; border: 1px solid #dadce0; border-radius: 6px; font-size: 1rem; }
+        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.2s; }
+        .btn-connect { background: var(--primary); color: white; width: 100%; margin-bottom: 15px; }
+        .btn-save { background: var(--success); color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f1f3f4; font-size: 0.85rem; text-transform: uppercase; }
+        .btn-return { background: var(--danger); color: white; padding: 6px 12px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<!-- Setup & Entry Panel -->
+<div class="card">
+    <h1>🚀 LMS Terminal</h1>
+    <button id="connectBtn" class="btn btn-connect" onclick="initScanner()">Connect RFID Scanner</button>
+    
+    <div id="scannerStatus" class="status-badge">HARDWARE DISCONNECTED</div>
+
+    <div id="entryForm" class="form-group">
+        <label>Current ID: <strong id="displayUID">----</strong></label>
+        <input type="text" id="studentName" placeholder="Student Name / ID...">
+        <input type="text" id="bookTitle" placeholder="Book Title...">
+        <button class="btn btn-save" onclick="registerTransaction()">Confirm Checkout</button>
+    </div>
+</div>
+
+<!-- Database Panel -->
+<div class="card" style="flex: 1.5;">
+    <h2>📊 Active Loans</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Card UID</th>
+                <th>Student</th>
+                <th>Book</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="dataTable"></tbody>
+    </table>
+</div>
+
+<script>
+    let port, reader, activeUID = "";
+    const dataTable = document.getElementById('dataTable');
+    const entryForm = document.getElementById('entryForm');
+
+    // 1. HARDWARE CONNECTION
+    async function initScanner() {
+        try {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            
+            document.getElementById('connectBtn').style.display = "none";
+            const status = document.getElementById('scannerStatus');
+            status.innerText = "SCANNER READY";
+            status.className = "status-badge online";
+
+            const decoder = new TextDecoderStream();
+            port.readable.pipeTo(decoder.writable);
+            reader = decoder.readable.getReader();
+
+            readSerial(); // Start listening
+        } catch (e) { alert("Web Serial Failed. Use Chrome/Edge over HTTPS/Localhost."); }
+    }
+
+    async function readSerial() {
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            if (value.trim()) {
+                activeUID = value.trim();
+                document.getElementById('displayUID').innerText = activeUID;
+                entryForm.classList.add('form-active');
+                document.getElementById('studentName').focus();
+            }
+        }
+    }
+
+    // 2. DATA MANAGEMENT (LocalStorage)
+    function registerTransaction() {
+        const student = document.getElementById('studentName').value;
+        const book = document.getElementById('bookTitle').value;
+        
+        if (!student || !book) return alert("Fill in student and book details!");
+
+        const record = { uid: activeUID, student, book, date: new Date().toLocaleString() };
+        let logs = JSON.parse(localStorage.getItem('library_data')) || [];
+        logs.push(record);
+        localStorage.setItem('library_data', JSON.stringify(logs));
+
+        // UI Reset
+        document.getElementById('studentName').value = "";
+        document.getElementById('bookTitle').value = "";
+        entryForm.classList.remove('form-active');
+        document.getElementById('displayUID').innerText = "----";
+        renderData();
+    }
+
+    function renderData() {
+        const logs = JSON.parse(localStorage.getItem('library_data')) || [];
+        dataTable.innerHTML = logs.map((item, idx) => `
+            <tr>
+                <td><code>${item.uid}</code></td>
+                <td>${item.student}</td>
+                <td>${item.book}</td>
+                <td><button class="btn btn-return" onclick="returnBook(${idx})">Return</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function returnBook(index) {
+        let logs = JSON.parse(localStorage.getItem('library_data'));
+        logs.splice(index, 1);
+        localStorage.setItem('library_data', JSON.stringify(logs));
+        renderData();
+    }
+
+    window.onload = renderData;
+</script>
+
+</body>
+</html>

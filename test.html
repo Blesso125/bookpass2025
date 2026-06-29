@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YVCKSHFTY3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-YVCKSHFTY3');
+    </script>
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ========== SIDENAV OVERRIDES ========== */
+        /* Hide original menu and logout from top bar */
+        .top-navbar .navbar-menu,
+        .top-navbar .navbar-user {
+            display: none;
+        }
+
+        .mobile-menu-toggle {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #2c7da0;
+            display: block;
+        }
+
+        /* Overlay */
+        .sidenav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1001;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.3s, opacity 0.3s;
+        }
+        .sidenav-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Side drawer */
+        .sidenav {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: white;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+            z-index: 1002;
+            transition: left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidenav.open {
+            left: 0;
+        }
+
+        .sidenav-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidenav-header h3 {
+            margin: 0;
+            color: #2c7da0;
+        }
+        .close-sidenav {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        /* Menu inside drawer */
+        .sidenav .navbar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+        }
+        .sidenav .navbar-menu li {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .sidenav .navbar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 1.5rem;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+        .sidenav .navbar-menu li a i {
+            width: 1.5rem;
+            color: #2c7da0;
+        }
+        .sidenav .navbar-menu li.active a {
+            background: #e9f0f5;
+            color: #2c7da0;
+            border-left: 4px solid #2c7da0;
+        }
+        .sidenav .navbar-menu li a:hover {
+            background: #f5f5f5;
+        }
+
+        /* Logout button inside drawer */
+        .sidenav .navbar-user {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #eee;
+            margin-top: auto;
+        }
+        .sidenav .logout-btn {
+            width: 100%;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* Adjust main content for fixed top bar */
+        .main-content {
+            margin-top: 70px;
+            padding: 1.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .sidenav { width: 85%; left: -85%; }
+        }
+
+        /* ===== EXISTING DASHBOARD STYLES (if not already in main.css) ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-icon {
+            font-size: 2.5rem;
+            color: #2c7da0;
+        }
+        .stat-content h3 {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        .dashboard-sections {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+        .recent-activity, .quick-actions {
+            background: white;
+            border-radius: 12px;
+            padding: 1.2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .activity-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .activity-item {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #2c7da0;
+            transition: background 0.2s;
+        }
+        .action-btn:hover {
+            background: #e9ecef;
+        }
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .primary-btn {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        @media (max-width: 768px) {
+            .dashboard-sections {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="app-body">
+    <nav class="top-navbar">
+        <div class="navbar-container">
+            <a href="dashboard.html" class="navbar-brand">
+                <i class="fas fa-book-open"></i>
+                <h1>BookPass</h1>
+            </a>
+            <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="navbar-menu" id="navbarMenu">
+                <li class="active">
+                    <a href="dashboard.html">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="inventory.html">
+                        <i class="fas fa-book"></i>
+                        Inventory
+                    </a>
+                </li>
+                <li>
+                    <a href="checkout.html">
+                        <i class="fas fa-hand-holding"></i>
+                        Check Out
+                    </a>
+                </li>
+                <li>
+                    <a href="checkin.html">
+                        <i class="fas fa-undo"></i>
+                        Check In
+                    </a>
+                </li>
+                <li>
+                    <a href="analytics.html">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li>
+                    <a href="admin.html">
+                        <i class="fas fa-cog"></i>
+                        Admin
+                    </a>
+                </li>
+                <li>
+                    <a href="about.html">
+                        <i class="fas fa-info-circle"></i>
+                        About
+                    </a>
+                </li>
+                <li>
+                    <a href="contact.html">
+                        <i class="fas fa-headset"></i>
+                        Support
+                    </a>
+                </li>
+            </ul>
+            <div class="navbar-user">
+                <button id="logoutBtn" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidenav overlay and drawer -->
+    <div id="sidenavOverlay" class="sidenav-overlay"></div>
+    <div id="sidenav" class="sidenav">
+        <div class="sidenav-header">
+            <h3><i class="fas fa-book-open"></i> Menu</h3>
+            <button id="closeSidenavBtn" class="close-sidenav">&times;</button>
+        </div>
+        <!-- The .navbar-menu and .navbar-user will be moved here by JS -->
+    </div>
+
+    <main class="main-content">
+        <header class="content-header">
+            <h1>Dashboard</h1>
+            <div class="header-actions">
+                <button class="primary-btn" onclick="location.href='checkout.html'">
+                    <i class="fas fa-plus"></i>
+                    Quick Checkout
+                </button>
+            </div>
+        </header>
+        <div class="content-body">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-book"></i></div>
+                    <div class="stat-content">
+                        <h3 id="totalBooks">0</h3>
+                        <p>Total Books</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-book-reader"></i></div>
+                    <div class="stat-content">
+                        <h3 id="checkedOutBooks">0</h3>
+                        <p>Checked Out</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-content">
+                        <h3 id="availableBooks">0</h3>
+                        <p>Available</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="stat-content">
+                        <h3 id="overdueBooks">0</h3>
+                        <p>Overdue</p>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-sections">
+                <section class="recent-activity">
+                    <h2>Recent Activity</h2>
+                    <div id="recentActivityList" class="activity-list">
+                        <div class="activity-item">Loading activities...</div>
+                    </div>
+                </section>
+                <section class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="action-buttons">
+                        <a href="inventory.html" class="action-btn"><i class="fas fa-plus"></i> Add New Book</a>
+                        <a href="checkout.html" class="action-btn"><i class="fas fa-hand-holding"></i> Quick Checkout</a>
+                        <a href="checkin.html" class="action-btn"><i class="fas fa-undo"></i> Quick Check-in</a>
+                        <a href="analytics.html" class="action-btn"><i class="fas fa-chart-bar"></i> View Reports</a>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase configuration (same as yours)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwt_EgdIgG2hMDAhleQgBgu5DjeXImWtQ",
+            authDomain: "bookpass-4aff4.firebaseapp.com",
+            projectId: "bookpass-4aff4",
+            storageBucket: "bookpass-4aff4.firebasestorage.app",
+            messagingSenderId: "833394499791",
+            appId: "1:833394499791:web:6666de0f66162f85a017ba",
+            measurementId: "G-YVCKSHFTY3"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ---------- SIDENAV TOGGLE ----------
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('mobileMenuToggle');
+            const overlay = document.getElementById('sidenavOverlay');
+            const sidenav = document.getElementById('sidenav');
+            const closeBtn = document.getElementById('closeSidenavBtn');
+
+            // Move existing menu and user container into the sidenav
+            const originalMenu = document.querySelector('.top-navbar .navbar-menu');
+            const originalUser = document.querySelector('.top-navbar .navbar-user');
+
+            if (originalMenu && !sidenav.querySelector('.navbar-menu')) {
+                sidenav.insertBefore(originalMenu, sidenav.querySelector('.sidenav-header').nextSibling);
+            }
+            if (originalUser && !sidenav.querySelector('.navbar-user')) {
+                sidenav.appendChild(originalUser);
+            }
+
+            function openSidenav() {
+                sidenav.classList.add('open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeSidenav() {
+                sidenav.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            if (toggleBtn) toggleBtn.addEventListener('click', openSidenav);
+            if (closeBtn) closeBtn.addEventListener('click', closeSidenav);
+            if (overlay) overlay.addEventListener('click', closeSidenav);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidenav.classList.contains('open')) closeSidenav();
+            });
+        });
+
+        // ---------- DASHBOARD DATA (real Firestore) ----------
+        async function loadDashboardStats() {
+            try {
+                // Total books count
+                const booksSnap = await db.collection('books').get();
+                const totalBooks = booksSnap.size;
+                document.getElementById('totalBooks').innerText = totalBooks;
+
+                // Active checkouts (returned == false)
+                const checkoutsSnap = await db.collection('checkouts').where('returned', '==', false).get();
+                const checkedOut = checkoutsSnap.size;
+                document.getElementById('checkedOutBooks').innerText = checkedOut;
+
+                // Available books = total - checked out (simplified)
+                const available = totalBooks - checkedOut;
+                document.getElementById('availableBooks').innerText = available >= 0 ? available : 0;
+
+                // Overdue books (dueDate < today and not returned)
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const overdueSnap = await db.collection('checkouts')
+                    .where('returned', '==', false)
+                    .where('dueDate', '<', today)
+                    .get();
+                document.getElementById('overdueBooks').innerText = overdueSnap.size;
+            } catch (error) {
+                console.error("Error loading stats:", error);
+                document.getElementById('totalBooks').innerText = 'Error';
+            }
+        }
+
+        async function loadRecentActivity() {
+            const activityList = document.getElementById('recentActivityList');
+            activityList.innerHTML = '<div class="activity-item">Loading activities...</div>';
+            try {
+                // Try to get from 'activity' collection first
+                let activitySnap = await db.collection('activity').orderBy('timestamp', 'desc').limit(10).get();
+                if (activitySnap.empty) {
+                    // Fallback: generate from recent checkouts
+                    const checkoutsSnap = await db.collection('checkouts').orderBy('checkoutDate', 'desc').limit(10).get();
+                    if (checkoutsSnap.empty) {
+                        activityList.innerHTML = '<div class="activity-item">No recent activity.</div>';
+                        return;
+                    }
+                    let items = '';
+                    checkoutsSnap.forEach(doc => {
+                        const data = doc.data();
+                        const date = data.checkoutDate ? data.checkoutDate.toDate().toLocaleString() : 'Unknown';
+                        items += `<div class="activity-item">
+                            <strong>${data.borrowerName}</strong> checked out <em>${data.bookTitle || 'a book'}</em> on ${date}
+                        </div>`;
+                    });
+                    activityList.innerHTML = items;
+                } else {
+                    let items = '';
+                    activitySnap.forEach(doc => {
+                        const data = doc.data();
+                        const time = data.timestamp ? data.timestamp.toDate().toLocaleString() : '';
+                        items += `<div class="activity-item">
+                            <strong>${data.action || 'Activity'}</strong>: ${data.description || ''}<br>
+                            <small>${time}</small>
+                        </div>`;
+                    });
+                    activityList.innerHTML = items;
+                }
+            } catch (error) {
+                console.error("Error loading activity:", error);
+                activityList.innerHTML = '<div class="activity-item">Could not load activity.</div>';
+            }
+        }
+
+        // Auth check – redirect if not logged in
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                loadDashboardStats();
+                loadRecentActivity();
+            }
+        });
+
+        // Logout button (works after being moved into sidenav)
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'logoutBtn' || e.target.closest('#logoutBtn')) {
+                auth.signOut().then(() => window.location.href = 'index.html');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Status - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="app-body">
+    <aside class="sidebar-nav" id="sidebarNav">
+        <a href="dashboard.html" class="sidebar-brand">
+            <i class="fas fa-book-open"></i>
+            <h1>BookPass</h1>
+        </a>
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <li>
+                <a href="dashboard.html">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="inventory.html">
+                    <i class="fas fa-book"></i>
+                    Inventory
+                </a>
+            </li>
+            <li>
+                <a href="checkout.html">
+                    <i class="fas fa-hand-holding"></i>
+                    Check Out
+                </a>
+            </li>
+            <li>
+                <a href="checkin.html">
+                    <i class="fas fa-undo"></i>
+                    Check In
+                </a>
+            </li>
+            <li>
+                <a href="analytics.html">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+            </li>
+            <li>
+                <a href="admin.html">
+                    <i class="fas fa-cog"></i>
+                    Admin
+                </a>
+            </li>
+            <li>
+                <a href="about.html">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+            </li>
+            <li class="active">
+                <a href="update-status.html">
+                    <i class="fas fa-sync-alt"></i>
+                    Update Status
+                </a>
+            </li>
+            <li>
+                <a href="contact.html">
+                    <i class="fas fa-headset"></i>
+                    Support
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="content-header">
+            <button id="sidebarToggleBtn" class="navbar-toggle-btn" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1>Update Status</h1>
+            <p>Check for updates and keep your BookPass installation up to date.</p>
+        </header>
+        <div class="content-body">
+            <div class="about-container">
+                <div class="about-section">
+                    <div class="form-card">
+                        <div class="about-header">
+                            <div class="logo-large">
+                                <i class="fas fa-sync-alt"></i>
+                                <h2>Update Status</h2>
+                                <p class="version">Current Version <span id="currentVersionText">1.0.0</span></p>
+                            </div>
+                        </div>
+                        <div class="about-content">
+                            <div class="update-panel">
+                                <h3>Update Status</h3>
+                                <p id="updateStatusText" class="update-status">Checking for updates...</p>
+                                
+                                <div class="update-details">
+                                    <div class="detail-row">
+                                        <strong>Current Version:</strong>
+                                        <span id="currentVersionLabel">1.0.0</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Latest Version:</strong>
+                                        <span id="latestVersionLabel">—</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Update Date:</strong>
+                                        <span id="updateDateLabel">—</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Release Notes:</strong>
+                                        <span id="releaseNotesLabel">—</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Last Checked:</strong>
+                                        <span id="lastCheckedLabel">Never</span>
+                                    </div>
+                                </div>
+
+                                <div class="update-actions">
+                                    <button id="checkForUpdatesBtn" class="primary-btn">
+                                        <i class="fas fa-search"></i> Check for updates
+                                    </button>
+                                    <button id="applyUpdateBtn" class="secondary-btn hidden">
+                                        <i class="fas fa-download"></i> Apply Update
+                                    </button>
+                                    <button id="rollbackUpdateBtn" class="danger-btn hidden">
+                                        <i class="fas fa-undo"></i> Rollback
+                                    </button>
+                                </div>
+
+                                <div class="update-info">
+                                    <div class="info-box">
+                                        <i class="fas fa-info-circle"></i>
+                                        <p>Updates are fetched from the GitHub repository. Make sure you have a stable internet connection.</p>
+                                    </div>
+                                    <div class="info-box warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <p>Always backup your data before applying updates.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="scripts/storage.js"></script>
+    <script src="scripts/navigation.js"></script>
+    <script src="scripts/update-status.js"></script>
+</body>
+</html>

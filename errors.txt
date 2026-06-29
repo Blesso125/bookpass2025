@@ -1,0 +1,6 @@
+->Student ID logic
+->Add new category option
+->Online and offline mode in checkin and checkout page
+->Index DB
+->Update logic
+                                                  

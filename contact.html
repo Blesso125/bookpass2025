@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YVCKSHFTY3"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YVCKSHFTY3');
+    </script>
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script>
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyAwt_EgdIgG2hMDAhleQgBgu5DjeXImWtQ",
+        authDomain: "bookpass-4aff4.firebaseapp.com",
+        databaseURL: "https://bookpass-4aff4-default-rtdb.firebaseio.com",
+        projectId: "bookpass-4aff4",
+        storageBucket: "bookpass-4aff4.firebasestorage.app",
+        messagingSenderId: "833394499791",
+        appId: "1:833394499791:web:6666de0f66162f85a017ba",
+        measurementId: "G-YVCKSHFTY3"
+      };
+
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      // Ensure only one app is initialized
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      window.firebaseAuth = firebase.auth();
+      window.firebaseAuth.onAuthStateChanged(function(user) {
+        if (!user) {
+          window.location.href = "index.html";
+        }
+      });
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Support - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="app-body">
+    <aside class="sidebar-nav" id="sidebarNav">
+        <a href="dashboard.html" class="sidebar-brand">
+            <i class="fas fa-book-open"></i>
+            <h1>BookPass</h1>
+        </a>
+        
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <li>
+                <a href="dashboard.html">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="inventory.html">
+                    <i class="fas fa-book"></i>
+                    Inventory
+                </a>
+            </li>
+            <li>
+                <a href="checkout.html">
+                    <i class="fas fa-hand-holding"></i>
+                    Check Out
+                </a>
+            </li>
+            <li>
+                <a href="checkin.html">
+                    <i class="fas fa-undo"></i>
+                    Check In
+                </a>
+            </li>
+            <li>
+                <a href="analytics.html">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+            </li>
+            <li>
+                <a href="admin.html">
+                    <i class="fas fa-cog"></i>
+                    Admin
+                </a>
+            </li>
+            <li>
+                <a href="about.html">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+            </li>
+            <li>
+                <a href="update-status.html">
+                    <i class="fas fa-sync-alt"></i>
+                    Update Status
+                </a>
+            </li>
+            <li class="active">
+                <a href="contact.html">
+                    <i class="fas fa-headset"></i>
+                    Support
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', function() {
+            if (window.firebaseAuth) {
+              window.firebaseAuth.signOut().then(function() {
+                window.location.href = 'index.html';
+              });
+            } else {
+              window.location.href = 'index.html';
+            }
+          });
+        }
+
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const navbarMenu = document.getElementById('navbarMenu');
+
+        if (mobileMenuToggle && navbarMenu) {
+          mobileMenuToggle.addEventListener('click', function() {
+            navbarMenu.classList.toggle('mobile-open');
+          });
+        }
+      });
+    </script>
+
+    <main class="main-content">
+        <header class="content-header">
+            <button id="sidebarToggleBtn" class="navbar-toggle-btn" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1>Contact Support</h1>
+            <p>Get help with BookPass or contact our team</p>
+        </header>
+
+        <div class="content-body">
+            <div class="contact-container">
+                <div class="contact-grid">
+                    <div class="contact-methods">
+                        <div class="form-card">
+                            <h2><i class="fas fa-headset"></i> Get In Touch</h2>
+                            <p>Our support team is here to help you with any questions or issues you may have with BookPass.</p>
+
+                            <div class="contact-options">
+                                <div class="contact-option">
+                                    <div class="contact-icon">
+                                        <i class="fas fa-envelope"></i>
+                                    </div>
+                                    <div class="contact-details">
+                                        <h3>Email Support</h3>
+                                        <p>Get detailed help via email</p>
+                                        <a href="mailto:envisage256@gmail.com" class="contact-link">envisage256@gmail.com</a>
+                                        <span class="response-time">Response within 24 hours</span>
+                                    </div>
+                                </div>
+
+                                <div class="contact-option">
+                                    <div class="contact-icon">
+                                        <i class="fas fa-phone"></i>
+                                    </div>
+                                    <div class="contact-details">
+                                        <h3>Phone Support</h3>
+                                        <p>Speak directly with our team</p>
+                                        <a href="tel:+1-555-ENVISAGE" class="contact-link">+1 (555) ENVISAGE</a>
+                                        <span class="response-time">Mon-Fri, 8AM-6PM EST</span>
+                                    </div>
+                                </div>
+
+                                <div class="contact-option">
+                                    <div class="contact-icon">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <div class="contact-details">
+                                        <h3>Live Chat</h3>
+                                        <p>Instant support when available</p>
+                                        <button class="contact-link" onclick="openLiveChat()">Start Live Chat</button>
+                                        <span class="response-time">Mon-Fri, 9AM-5PM EST</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-card">
+                            <h2><i class="fas fa-question-circle"></i> Quick Help</h2>
+                            
+                            <div class="faq-section">
+                                <div class="faq-item">
+                                    <div class="faq-question" onclick="toggleFaq(this)">
+                                        <h4>How do I add a new book to inventory?</h4>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <p>Go to the Inventory page and click "Add New Book". Fill in the book details including title, author, ISBN, and category, then click Save.</p>
+                                    </div>
+                                </div>
+
+                                <div class="faq-item">
+                                    <div class="faq-question" onclick="toggleFaq(this)">
+                                        <h4>How do I set up class captains?</h4>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <p>Navigate to Admin panel and use the Class Captains Management section. Click "Add Captain" and enter their information including name, ID, class, and grade level.</p>
+                                    </div>
+                                </div>
+
+                                <div class="faq-item">
+                                    <div class="faq-question" onclick="toggleFaq(this)">
+                                        <h4>Can I export library data?</h4>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <p>Yes! You can export data from the Analytics page using the "Export Report" button, or from individual pages like Inventory and Check-in.</p>
+                                    </div>
+                                </div>
+
+                                <div class="faq-item">
+                                    <div class="faq-question" onclick="toggleFaq(this)">
+                                        <h4>What browsers are supported?</h4>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <p>BookPass works on all modern browsers including Chrome, Firefox, Safari, and Edge. Make sure JavaScript is enabled for full functionality.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-form-section">
+                        <div class="form-card">
+                            <h2><i class="fas fa-paper-plane"></i> Send Us a Message</h2>
+                            
+                            <form id="contactForm" class="contact-form">
+                                <div class="form-group">
+                                    <label for="contactName">Your Name *</label>
+                                    <input type="text" id="contactName" name="name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="contactEmail">Email Address *</label>
+                                    <input type="email" id="contactEmail" name="email" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="contactSchool">School/Institution</label>
+                                    <input type="text" id="contactSchool" name="school">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="contactCategory">Issue Category *</label>
+                                    <select id="contactCategory" name="category" required>
+                                        <option value="">Select a category</option>
+                                        <option value="technical">Technical Issue</option>
+                                        <option value="feature">Feature Request</option>
+                                        <option value="training">Training & Setup</option>
+                                        <option value="billing">Billing Question</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="contactSubject">Subject *</label>
+                                    <input type="text" id="contactSubject" name="subject" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="contactMessage">Message *</label>
+                                    <textarea id="contactMessage" name="message" rows="6" required placeholder="Please describe your question or issue in detail..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="contactUrgency">Urgency Level</label>
+                                    <select id="contactUrgency" name="urgency">
+                                        <option value="low">Low - General question</option>
+                                        <option value="medium" selected>Medium - Need help soon</option>
+                                        <option value="high">High - Urgent issue</option>
+                                        <option value="critical">Critical - System down</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="primary-btn">
+                                        <i class="fas fa-paper-plane"></i>
+                                        Send Message
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="form-card">
+                            <h3><i class="fas fa-clock"></i> Support Hours</h3>
+                            <div class="support-hours">
+                                <div class="hours-item">
+                                    <span class="day">Monday - Friday</span>
+                                    <span class="time">8:00 AM - 6:00 PM EAT</span>
+                                </div>
+                                <div class="hours-item">
+                                    <span class="day">Saturday</span>
+                                    <span class="time">10:00 AM - 2:00 PM EAT</span>
+                                </div>
+                                <div class="hours-item">
+                                    <span class="day">Sunday</span>
+                                    <span class="time">Emergency support only</span>
+                                </div>
+                            </div>
+
+                            <div class="emergency-note">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>For critical system issues outside business hours, please call our emergency hotline or mark your message as "Critical".</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="scripts/storage.js"></script>
+    <script src="scripts/navigation.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navigationManager = new NavigationManager();
+            navigationManager.initializeNavigation();
+            navigationManager.updateCurrentUser();
+
+            // Ensure Firebase Database is available
+            if (typeof firebase === 'undefined' || !firebase.database) {
+                alert('Firebase Realtime Database SDK not loaded. Please check your internet connection.');
+                return;
+            }
+
+            // Debugging Firebase initialization
+            console.log('Firebase apps:', firebase.apps);
+            console.log('Firebase config:', firebaseConfig);
+
+            // Contact form handling
+            const contactForm = document.getElementById('contactForm');
+            if (contactForm) {
+                // Debugging event listener execution
+                console.log('Contact form event listener attached:', !!contactForm);
+
+                contactForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                    submitBtn.disabled = true;
+
+                    // Debugging submit button state
+                    console.log('Submit button state:', { disabled: submitBtn.disabled, text: submitBtn.innerHTML });
+
+                    // Collect form data
+                    const formData = {
+                        name: document.getElementById('contactName').value,
+                        email: document.getElementById('contactEmail').value,
+                        school: document.getElementById('contactSchool').value,
+                        category: document.getElementById('contactCategory').value,
+                        subject: document.getElementById('contactSubject').value,
+                        message: document.getElementById('contactMessage').value,
+                        urgency: document.getElementById('contactUrgency').value,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    // Debug: Log formData and firebase object
+                    console.log('Submitting to Firebase:', formData);
+                    console.log('Firebase object:', firebase);
+                    try {
+                        if (!firebase || !firebase.database) {
+                            throw new Error('Firebase Database SDK not loaded.');
+                        }
+                        firebase.database().ref('supportMessages').push(formData)
+                            .then(() => {
+                                if (window.navigationManager && typeof navigationManager.showNotification === 'function') {
+                                    navigationManager.showNotification('Message sent successfully! We\'ll get back to you soon.', 'success');
+                                } else {
+                                    alert('Message sent successfully! We\'ll get back to you soon.');
+                                }
+                                contactForm.reset();
+                            })
+                            .catch((error) => {
+                                if (window.navigationManager && typeof navigationManager.showNotification === 'function') {
+                                    navigationManager.showNotification('Failed to send message. Please try again.', 'error');
+                                } else {
+                                    alert('Failed to send message. Please try again.');
+                                }
+                                console.error('Firebase push error:', error);
+                            })
+                            .finally(() => {
+                                submitBtn.innerHTML = originalText;
+                                submitBtn.disabled = false;
+                            });
+                    } catch (err) {
+                        if (window.navigationManager && typeof navigationManager.showNotification === 'function') {
+                            navigationManager.showNotification('Failed to send message. Please check your connection and try again.', 'error');
+                        } else {
+                            alert('Failed to send message. Please check your connection and try again.');
+                        }
+                        console.error('Firebase SDK error:', err);
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }
+                });
+            }
+        });
+
+        function toggleFaq(element) {
+            const faqItem = element.parentNode;
+            const answer = faqItem.querySelector('.faq-answer');
+            const icon = element.querySelector('i');
+            
+            const isOpen = faqItem.classList.contains('open');
+            
+            // Close all other FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('open');
+                item.querySelector('i').classList.remove('fa-chevron-up');
+                item.querySelector('i').classList.add('fa-chevron-down');
+            });
+            
+            // Toggle current item
+            if (!isOpen) {
+                faqItem.classList.add('open');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            }
+        }
+
+        function openLiveChat() {
+            alert('Live chat feature coming soon! Please use email or phone support for immediate assistance.');
+        }
+    </script>
+</body>
+</html>

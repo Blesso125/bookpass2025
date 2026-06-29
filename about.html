@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YVCKSHFTY3"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YVCKSHFTY3');
+    </script>
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="app-body">
+    <aside class="sidebar-nav" id="sidebarNav">
+        <a href="dashboard.html" class="sidebar-brand">
+            <i class="fas fa-book-open"></i>
+            <h1>BookPass</h1>
+        </a>
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <li>
+                <a href="dashboard.html">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="inventory.html">
+                    <i class="fas fa-book"></i>
+                    Inventory
+                </a>
+            </li>
+            <li>
+                <a href="checkout.html">
+                    <i class="fas fa-hand-holding"></i>
+                    Check Out
+                </a>
+            </li>
+            <li>
+                <a href="checkin.html">
+                    <i class="fas fa-undo"></i>
+                    Check In
+                </a>
+            </li>
+            <li>
+                <a href="analytics.html">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+            </li>
+            <li>
+                <a href="admin.html">
+                    <i class="fas fa-cog"></i>
+                    Admin
+                </a>
+            </li>
+            <li class="active">
+                <a href="about.html">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+            </li>
+            <li>
+                <a href="update-status.html">
+                    <i class="fas fa-sync-alt"></i>
+                    Update Status
+                </a>
+            </li>
+            <li>
+                <a href="contact.html">
+                    <i class="fas fa-headset"></i>
+                    Support
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="content-header">
+            <button id="sidebarToggleBtn" class="navbar-toggle-btn" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1>About BookPass</h1>
+            <p>Learn more about your library management system</p>
+        </header>
+        <div class="content-body">
+            <div class="about-container">
+                <div class="about-section">
+                    <div class="form-card">
+                        <div class="about-header">
+                            <div class="logo-large">
+                                <i class="fas fa-book-open"></i>
+                                <h2>BookPass</h2>
+                                <p class="version">Version <span id="currentVersionText">1.0.0</span></p>
+                            </div>
+                        </div>
+                        <div class="about-content">
+                            <div class="feature-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-hand-holding"></i>
+                                    </div>
+                                    <h3>Easy Checkout</h3>
+                                    <p>Quick and simple book checkout process for students and class captains with automated due date calculation.</p>
+                                </div>
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <h3>Smart Analytics</h3>
+                                    <p>Comprehensive reporting and analytics to track library usage, popular books, and overdue items.</p>
+                                </div>
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <h3>Class Captain System</h3>
+                                    <p>Dedicated support for classroom teachers to manage multiple books for their classes efficiently.</p>
+                                </div>
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <i class="fas fa-boxes"></i>
+                                    </div>
+                                    <h3>Inventory Management</h3>
+                                    <p>Complete book catalog management with search, filtering, and availability tracking.</p>
+                                </div>
+                            </div>
+                            <div class="company-info">
+                                <h3>About Envisage</h3>
+                                <p>BookPass is developed by Envisage, a forward-thinking company dedicated to creating innovative educational technology solutions. We believe in empowering educators and students with tools that make learning more accessible and efficient.</p>
+                                <div class="company-values">
+                                    <div class="value-item">
+                                        <i class="fas fa-lightbulb"></i>
+                                        <div>
+                                            <h4>Innovation</h4>
+                                            <p>We constantly push boundaries to create cutting-edge solutions for modern education.</p>
+                                        </div>
+                                    </div>
+                                    <div class="value-item">
+                                        <i class="fas fa-heart"></i>
+                                        <div>
+                                            <h4>Student-Centered</h4>
+                                            <p>Every feature we build is designed with student success and educator efficiency in mind.</p>
+                                        </div>
+                                    </div>
+                                    <div class="value-item">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <div>
+                                            <h4>Privacy & Security</h4>
+                                            <p>We prioritize data protection and ensure secure, reliable systems for educational institutions.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tech-info">
+                                <h3>Technical Information</h3>
+                                <div class="tech-grid">
+                                    <div class="tech-item">
+                                        <strong>Platform:</strong>
+                                        <span>Web-based Application</span>
+                                    </div>
+                                    <div class="tech-item">
+                                        <strong>Storage:</strong>
+                                        <span>Firebase Cloud Storage</span>
+                                    </div>
+                                    <div class="tech-item">
+                                        <strong>Compatibility:</strong>
+                                        <span>Modern Web Browsers</span>
+                                    </div>
+                                    <div class="tech-item">
+                                        <strong>Responsive:</strong>
+                                        <span>Mobile & Desktop Friendly</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="update-panel">
+                                <h3>Update Checker</h3>
+                                <p id="updateStatusText">Checking for updates...</p>
+                                <div class="update-details">
+                                    <span><strong>Current version:</strong> <span id="currentVersionLabel">1.0.0</span></span>
+                                    <span><strong>Latest version:</strong> <span id="latestVersionLabel">—</span></span>
+                                </div>
+                                <div class="update-actions">
+                                    <button id="checkForUpdatesBtn" class="primary-btn">Check for updates</button>
+                                    <button id="applyUpdateBtn" class="secondary-btn hidden">Reload & apply update</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="scripts/storage.js"></script>
+    <script src="scripts/navigation.js"></script>
+    <script src="scripts/about.js"></script>
+</body>
+</html>
+    <!-- Meet Our Team Section -->
+    <section class="team-section">
+        <h2 class="team-title">Meet Our Team</h2>
+        <div class="team-grid">
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/asher.jpeg" alt="Mieconi Asher King" class="team-photo" />
+                </div>
+                <h3>Mieconi Asher King</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/balaba.jpeg" alt="Balaba Prince Christian" class="team-photo" />
+                </div>
+                <h3>Balaba Prince Christian</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/bamwite.jpeg" alt="Bamwite Elijah" class="team-photo" />
+                </div>
+                <h3>Bamwite Elijah</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/blessed.jpeg" alt="Blessed Harvey Muhereza" class="team-photo" />
+                </div>
+                <h3>Blessed Harvey Muhereza</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/Iana.jpeg" alt="Kamikazi Iana" class="team-photo" />
+                </div>
+                <h3>Kamikazi Iana</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/jael.jpeg" alt="Mukasa Jael Jewel" class="team-photo" />
+                </div>
+                <h3>Mukasa Jael Jewel</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/joshua.jpg" alt="Lwanga Joshua" class="team-photo" />
+                </div>
+                <h3>Lwanga Joshua</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/rodrick.jpeg" alt="Rodrick Ben Ntege Magunda" class="team-photo" />
+                </div>
+                <h3>Rodrick Ben Ntege Magunda</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/smith.jpeg" alt="Tumusime Mercy Smith" class="team-photo" />
+                </div>
+                <h3>Tumusime Mercy Smith</h3>
+            </div>
+            <div class="team-member">
+                <div class="team-img">
+                    <img src="images/mr.ogwal.jpeg" alt="Ogwal Isaac" class="team-photo" />
+                </div>
+                <h3>Ogwal Isaac</h3>
+            </div>
+        </div>
+    </section>
+    <!-- Fullscreen Modal for Team Images -->
+    <div id="teamImageModal" class="team-image-modal">
+        <span class="team-image-modal-close" id="teamImageModalClose">&times;</span>
+        <img class="team-image-modal-content" id="teamImageModalImg" src="" alt="Team Member" />
+        <div class="team-image-modal-caption" id="teamImageModalCaption"></div>
+    </div>
+</html>

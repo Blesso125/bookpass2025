@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YVCKSHFTY3"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YVCKSHFTY3');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAwt_EgdIgG2hMDAhleQgBgu5DjeXImWtQ",
+        authDomain: "bookpass-4aff4.firebaseapp.com",
+        projectId: "bookpass-4aff4",
+        storageBucket: "bookpass-4aff4.firebasestorage.app",
+        messagingSenderId: "833394499791",
+        appId: "1:833394499791:web:6666de0f66162f85a017ba",
+        measurementId: "G-YVCKSHFTY3"
+      };
+      firebase.initializeApp(firebaseConfig);
+      window.firebaseAuth = firebase.auth();
+      window.firebaseAuth.onAuthStateChanged(function(user) {
+        if (!user) {
+          window.location.href = "index.html";
+        }
+      });
+    </script>
+</head>
+<body class="app-body">
+    <aside class="sidebar-nav" id="sidebarNav">
+        <a href="dashboard.html" class="sidebar-brand">
+            <i class="fas fa-book-open"></i>
+            <h1>BookPass</h1>
+        </a>
+        
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <li>
+                <a href="dashboard.html">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li class="active">
+                <a href="inventory.html">
+                    <i class="fas fa-book"></i>
+                    Inventory
+                </a>
+            </li>
+            <li>
+                <a href="checkout.html">
+                    <i class="fas fa-hand-holding"></i>
+                    Check Out
+                </a>
+            </li>
+            <li>
+                <a href="checkin.html">
+                    <i class="fas fa-undo"></i>
+                    Check In
+                </a>
+            </li>
+            <li>
+                <a href="analytics.html">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+            </li>
+            <li>
+                <a href="admin.html">
+                    <i class="fas fa-cog"></i>
+                    Admin
+                </a>
+            </li>
+            <li>
+                <a href="about.html">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+            </li>
+            <li>
+                <a href="update-status.html">
+                    <i class="fas fa-sync-alt"></i>
+                    Update Status
+                </a>
+            </li>
+            <li>
+                <a href="contact.html">
+                    <i class="fas fa-headset"></i>
+                    Support
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', function() {
+            if (window.firebaseAuth) {
+              window.firebaseAuth.signOut().then(function() {
+                window.location.href = 'index.html';
+              });
+            } else {
+              window.location.href = 'index.html';
+            }
+          });
+        }
+      });
+    </script>
+
+    <main class="main-content">
+        <header class="content-header">
+            <button id="sidebarToggleBtn" class="navbar-toggle-btn" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1>Book Inventory</h1>
+            <button id="addBookBtn" class="primary-btn">
+                <i class="fas fa-plus"></i>
+                Add New Book
+            </button>
+        </header>
+
+        <div class="inventory-controls">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search books by title, author, or ISBN...">
+            </div>
+            <div class="filter-controls">
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="Fiction">Fiction</option>
+                    <option value="Non-Fiction">Non-Fiction</option>
+                    <option value="Science">Science</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="History">History</option>
+                    <option value="Literature">Literature</option>
+                    <option value="Reference">Reference</option>
+                </select>
+                <select id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="available">Available</option>
+                    <option value="checked-out">Checked Out</option>
+                    <option value="overdue">Overdue</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="booksContainer" class="books-grid">
+            <!-- Books will be populated by JavaScript -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-book"></i>
+            <h3>No Books Found</h3>
+            <p>Start building your library by adding your first book.</p>
+            <button class="primary-btn" id="emptyStateAddBookBtn">
+                <i class="fas fa-plus"></i>
+                Add First Book
+            </button>
+        </div>
+    </main>
+
+    <!-- Add/Edit Book Modal -->
+    <div id="bookModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Book</h2>
+                <button class="close-btn" id="closeBookModalBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="bookForm" class="modal-form">
+                <input type="hidden" id="bookId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bookTitle">Title *</label>
+                        <input type="text" id="bookTitle" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookAuthor">Author *</label>
+                        <input type="text" id="bookAuthor" name="author" required>
+                    </div>
+                </div>
+                
+                <!-- Front Cover -->
+                <div class="form-row">
+                    <div class="form-group" style="width:48%">
+                        <label>Front Cover</label>
+                        <div id="coverDropZone" class="cover-drop-zone">
+                            <input type="file" id="bookCover" accept="image/*" style="display:none">
+                            <div id="coverPreview" class="cover-preview">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #aaa; margin-bottom: 10px;"></i>
+                                <p style="margin: 0 0 5px 0; font-size: 14px;">Drag & drop or click to select</p>
+                            </div>
+                            <button type="button" class="browse-btn" onclick="document.getElementById('bookCover').click()">
+                                <i class="fas fa-folder-open"></i> Browse Files
+                            </button>
+                        </div>
+                        <input type="hidden" id="bookCoverUrl">
+                    </div>
+                    
+                    <!-- Back Cover -->
+                    <div class="form-group" style="width:48%">
+                        <label>Back Cover</label>
+                        <div id="backCoverDropZone" class="cover-drop-zone">
+                            <input type="file" id="bookBackCover" accept="image/*" style="display:none">
+                            <div id="backCoverPreview" class="cover-preview">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #aaa; margin-bottom: 10px;"></i>
+                                <p style="margin: 0 0 5px 0; font-size: 14px;">Drag & drop or click to select</p>
+                            </div>
+                            <button type="button" class="browse-btn" onclick="document.getElementById('bookBackCover').click()">
+                                <i class="fas fa-folder-open"></i> Browse Files
+                            </button>
+                        </div>
+                        <input type="hidden" id="bookBackCoverUrl">
+                    </div>
+                </div>
+                
+                <!-- Additional Cover -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Additional Cover (Optional)</label>
+                        <div id="additionalCoverDropZone" class="cover-drop-zone">
+                            <input type="file" id="bookAdditionalCover" accept="image/*" style="display:none">
+                            <div id="additionalCoverPreview" class="cover-preview">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #aaa; margin-bottom: 10px;"></i>
+                                <p style="margin: 0 0 5px 0; font-size: 14px;">Drag & drop or click to select</p>
+                            </div>
+                            <button type="button" class="browse-btn" onclick="document.getElementById('bookAdditionalCover').click()">
+                                <i class="fas fa-folder-open"></i> Browse Files
+                            </button>
+                        </div>
+                        <input type="hidden" id="bookAdditionalCoverUrl">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bookISBN">ISBN</label>
+                        <input type="text" id="bookISBN">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookCategory">Category *</label>
+                        <select id="bookCategory" required>
+                            <option value="">Select Category</option>
+                            <option value="Fiction">Fiction</option>
+                            <option value="Non-Fiction">Non-Fiction</option>
+                            <option value="Science">Science</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="History">History</option>
+                            <option value="Literature">Literature</option>
+                            <option value="Reference">Reference</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bookPublisher">Publisher</label>
+                        <input type="text" id="bookPublisher">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookYear">Publication Year</label>
+                        <input type="number" id="bookYear" min="1800" max="2025">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bookCopies">Number of Copies *</label>
+                        <input type="number" id="bookCopies" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookLocation">Shelf Location</label>
+                        <input type="text" id="bookLocation" placeholder="e.g., A-101">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="bookDescription">Description</label>
+                    <textarea id="bookDescription" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="secondary-btn" id="cancelBookModalBtn">Cancel</button>
+                    <button type="submit" class="primary-btn">Save Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="scripts/storage.js"></script>
+    <script src="scripts/navigation.js"></script>
+    <script src="scripts/syncCoordinator.js"></script>
+    <script src="scripts/inventory.js"></script>
+    <script>
+        // ============================================
+        // OFFLINE MODE AND AUTO-SYNC SETUP
+        // ============================================
+        
+        // Handle connection restoration - trigger automatic sync
+        window.addEventListener('online', async function() {
+            console.log('📡 Connection restored on Inventory page');
+            if (window.navigationManager) {
+                window.navigationManager.showNotification('Connection restored - syncing offline changes...', 'info');
+            }
+            
+            // Trigger sync through storage manager
+            if (window.storageManager && window.storageManager.isOnline()) {
+                try {
+                    const result = await window.storageManager.processOfflineActions();
+                    if (result.success > 0) {
+                        if (window.navigationManager) {
+                            window.navigationManager.showNotification(`Synced ${result.success} book changes to Firebase ✓`, 'success');
+                        }
+                        // Refresh books if inventory manager is available
+                        if (window.inventoryManager) {
+                            window.inventoryManager.loadBooks();
+                        }
+                    }
+                    if (result.failed > 0) {
+                        if (window.navigationManager) {
+                            window.navigationManager.showNotification(`Warning: ${result.failed} changes pending sync`, 'warning');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Sync error:', error);
+                    if (window.navigationManager) {
+                        window.navigationManager.showNotification('Sync failed - will retry automatically', 'error');
+                    }
+                }
+            }
+            
+            // Update UI indicators if syncCoordinator is available
+            if (window.syncCoordinator) {
+                window.syncCoordinator.updateAllManagerStatus();
+            }
+        });
+        
+        // Handle connection loss
+        window.addEventListener('offline', function() {
+            console.log('🔴 Connection lost on Inventory page');
+            if (window.navigationManager) {
+                window.navigationManager.showNotification('Connection lost - switched to offline mode', 'warning');
+            }
+        });
+        
+        // Setup periodic auto-sync (every 30 seconds when online with pending actions)
+        setInterval(async function() {
+            if (window.storageManager && window.navigator.onLine) {
+                const status = window.storageManager.getOfflineSyncStatus();
+                if (status.hasPendingActions && !status.isOfflineMode) {
+                    try {
+                        const result = await window.storageManager.processOfflineActions();
+                        if (result.success > 0) {
+                            console.log(`Auto-synced ${result.success} book changes to Firebase`);
+                            if (window.inventoryManager) {
+                                window.inventoryManager.loadBooks();
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Auto-sync error:', error);
+                    }
+                }
+            }
+        }, 30000);
+    </script>
+    
+    <style>
+      .cover-drop-zone {
+        border: 2px dashed #aaa;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        margin-bottom: 8px;
+        background: #f9f9f9;
+        transition: all 0.3s ease;
+      }
+      .cover-drop-zone.dragover {
+        border-color: #007bff;
+        background: #e6f0ff;
+      }
+      .cover-preview {
+        min-height: 150px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+      .cover-preview img {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 8px;
+        margin: 0 auto;
+        display: block;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .browse-btn {
+        margin-top: 8px;
+        font-size: 13px;
+        padding: 8px 16px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        width: auto;
+        display: inline-block;
+      }
+      .browse-btn:hover {
+        background: #5a6268;
+      }
+      .upload-status {
+        margin-top: 8px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .upload-status.success {
+        color: #27ae60;
+      }
+      .upload-status.error {
+        color: #e74c3c;
+      }
+      .upload-status.uploading {
+        color: #007bff;
+      }
+      .remove-image-btn {
+        margin-top: 8px;
+        font-size: 11px;
+        padding: 4px 10px;
+        background: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .remove-image-btn:hover {
+        background: #c0392b;
+      }
+      .book-card .book-cover-thumb img {
+        max-width: 80px;
+        max-height: 100px;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        display: block;
+      }
+      .book-cover-detail img {
+        max-width: 160px;
+        max-height: 200px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        display: block;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .fa-spinner {
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+</body>
+</html>

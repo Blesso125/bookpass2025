@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YVCKSHFTY3"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-YVCKSHFTY3');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyAwt_EgdIgG2hMDAhleQgBgu5DjeXImWtQ",
+        authDomain: "bookpass-4aff4.firebaseapp.com",
+        projectId: "bookpass-4aff4",
+        storageBucket: "bookpass-4aff4.firebasestorage.app",
+        messagingSenderId: "833394499791",
+        appId: "1:833394499791:web:6666de0f66162f85a017ba",
+        measurementId: "G-YVCKSHFTY3"
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+    </script>
+</head>
+<body class="login-page">
+    <div class="login-bg-shapes"></div>
+    <div class="login-center-container">
+      <div class="login-main-card">
+      <div class="login-card-left">
+        <div class="login-logo-illustration">
+            <i class="fas fa-book-open"></i>
+        </div>
+      </div>
+      <div class="login-card-right">
+        <h2 class="login-welcome">Welcome to BookPass!</h2>
+        <center> <p class="login-subtitle">Please login to continue.</p> </center>
+        <form id="loginForm" class="login-form-modern">
+          <div class="login-input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" id="username" name="username" placeholder="Email address" required />
+          </div>
+          <div class="login-input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="password" name="password" placeholder="Password" required />
+            <span class="show-password" id="togglePassword">SHOW</span>
+          </div>
+          <div class="login-options-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="rememberMe" />
+              <span class="checkmark"></span>
+              Remember Me
+            </label>
+            <a href="#" class="forgot-password">Forgot password?</a>
+          </div>
+          <button type="submit" class="login-button-modern">Sign in</button>
+        </form>
+        <div id="loginError" class="error-message" style="display: none;"></div>
+        <div class="login-footer-links">
+          <button type="button" class="info-btn" id="openInfoModal">More Info</button>
+          <div id="infoModal" class="info-modal">
+            <div class="info-modal-content">
+              <span class="close-info-modal" id="closeInfoModal">&times;</span>
+              <h2>BookPass Info</h2>
+              <ul class="info-details-list">
+                <li><strong>Contact:</strong> <a href="mailto:envisage256@gmail.com">envisage256@gmail.com</a></li>
+                <li><strong>Version:</strong> 1.0.0</li>
+              </ul>
+              <p style="margin-top:16px; color:#64748b; font-size:0.95rem;">For support or feedback, email us any time.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      <footer class="login-footer">
+        <span>&copy; 2025 BookPass. All rights reserved.</span>
+        <span><a href="#">Terms and Conditions</a> | <a href="#">Privacy Policy</a></span>
+      </footer>
+    </div>
+    <script>
+      // Show/hide password toggle, info modal, auto-redirect if already signed in, and Remember Me logic
+      document.addEventListener('DOMContentLoaded', function() {
+        // Auto-redirect if already signed in
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (user) {
+            window.location.href = 'dashboard.html';
+          }
+        });
+        const passwordInput = document.getElementById('password');
+        const toggle = document.getElementById('togglePassword');
+        if (toggle && passwordInput) {
+          toggle.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+              passwordInput.type = 'text';
+              toggle.textContent = 'HIDE';
+            } else {
+              passwordInput.type = 'password';
+              toggle.textContent = 'SHOW';
+            }
+          });
+        }
+
+        // Info modal logic (open from both More Info button and Forgot Password link)
+        const openInfoModal = document.getElementById('openInfoModal');
+        const closeInfoModal = document.getElementById('closeInfoModal');
+        const infoModal = document.getElementById('infoModal');
+        const forgotPassword = document.querySelector('.forgot-password');
+        if (openInfoModal && closeInfoModal && infoModal) {
+          openInfoModal.addEventListener('click', function(e) {
+            e.preventDefault();
+            infoModal.classList.add('show');
+          });
+          closeInfoModal.addEventListener('click', function() {
+            infoModal.classList.remove('show');
+          });
+          window.addEventListener('click', function(e) {
+            if (e.target === infoModal) {
+              infoModal.classList.remove('show');
+            }
+          });
+        }
+        if (forgotPassword && infoModal) {
+          forgotPassword.addEventListener('click', function(e) {
+            e.preventDefault();
+            infoModal.classList.add('show');
+          });
+        }
+        // Remember Me: Prefill email if stored
+        const rememberMeCheckbox = document.getElementById('rememberMe');
+        const usernameInput = document.getElementById('username');
+        if (localStorage.getItem('rememberedEmail')) {
+          usernameInput.value = localStorage.getItem('rememberedEmail');
+          if (rememberMeCheckbox) rememberMeCheckbox.checked = true;
+        }
+
+        // On form submit, store or clear email
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+          loginForm.addEventListener('submit', function(e) {
+            if (rememberMeCheckbox && rememberMeCheckbox.checked) {
+              localStorage.setItem('rememberedEmail', usernameInput.value);
+            } else {
+              localStorage.removeItem('rememberedEmail');
+            }
+          });
+        }
+      });
+    </script>
+    <script src="scripts/auth.js"></script>
+</body>
+</html>

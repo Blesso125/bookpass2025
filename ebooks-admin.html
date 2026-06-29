@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E‑library Management - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    
+</head>
+<body class="app-body">
+    <nav class="top-navbar">
+        <div class="navbar-container">
+            <a href="dashboard.html" class="navbar-brand">
+                <i class="fas fa-book-open"></i>
+                <h1>BookPass</h1>
+            </a>
+            <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="navbar-menu" id="navbarMenu">
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="inventory.html"><i class="fas fa-book"></i> Inventory</a></li>
+                <li><a href="checkout.html"><i class="fas fa-hand-holding"></i> Check Out</a></li>
+                <li><a href="checkin.html"><i class="fas fa-undo"></i> Check In</a></li>
+                <li><a href="analytics.html"><i class="fas fa-chart-line"></i> Analytics</a></li>
+                <li><a href="admin.html"><i class="fas fa-cog"></i> Admin</a></li>
+                <li class="active"><a href="ebooks-admin.html"><i class="fas fa-book-reader"></i> E‑library Mgmt</a></li>
+                <li><a href="about.html"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="contact.html"><i class="fas fa-headset"></i> Support</a></li>
+            </ul>
+            <div class="navbar-user">
+                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <header class="content-header">
+            <h1><i class="fas fa-book-reader"></i> E‑library Management</h1>
+            <p>Upload, manage and view statistics of digital books (PDFs).</p>
+        </header>
+
+        <div class="admin-ebooks-container">
+            <!-- Upload Form -->
+            <div class="form-card upload-card">
+                <h2>Upload New E‑Book</h2>
+                <form id="uploadEbookForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Title *</label>
+                            <input type="text" id="ebookTitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Author *</label>
+                            <input type="text" id="ebookAuthor" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Subject/Category *</label>
+                            <div class="subject-input-group">
+                                <select id="ebookSubjectSelect" required>
+                                    <option value="">Select existing subject</option>
+                                </select>
+                                <button type="button" id="addNewSubjectBtn" class="btn-secondary btn-sm">+ New</button>
+                            </div>
+                            <div id="newSubjectInput" class="new-subject-input">
+                                <input type="text" id="ebookSubjectNew" placeholder="Enter new subject name">
+                                <button type="button" id="cancelNewSubjectBtn" class="btn-secondary btn-sm" style="margin-top:5px;">Cancel</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Level *</label>
+                            <select id="ebookLevel" required>
+                                <option value="">Select level</option>
+                                <option value="O-level">O‑level</option>
+                                <option value="A-level">A‑level</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description (optional)</label>
+                        <textarea id="ebookDescription" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>PDF File *</label>
+                        <input type="file" id="ebookFile" accept="application/pdf" required>
+                    </div>
+                    <button type="submit" class="primary-btn" id="uploadBtn">
+                        <i class="fas fa-upload"></i> Upload Book
+                    </button>
+                </form>
+                <div id="uploadProgress" style="display:none; margin-top:10px;">
+                    <progress value="0" max="100"></progress> <span>0%</span>
+                </div>
+            </div>
+
+            <!-- Statistics Summary -->
+            <div class="stats-summary">
+                <div class="stat-card">
+                    <i class="fas fa-eye"></i>
+                    <h3>Most Viewed</h3>
+                    <div id="mostViewedBook">-</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-download"></i>
+                    <h3>Most Downloaded</h3>
+                    <div id="mostDownloadedBook">-</div>
+                </div>
+            </div>
+
+            <!-- E‑books List (Admin view) -->
+            <div class="ebooks-list-container">
+                <h2>All Digital Books</h2>
+                <div class="search-filter">
+                    <input type="text" id="adminSearch" placeholder="Search by title, author, subject...">
+                    <select id="levelFilter">
+                        <option value="">All levels</option>
+                        <option value="O-level">O‑level</option>
+                        <option value="A-level">A‑level</option>
+                    </select>
+                </div>
+                <div id="ebooksAdminList" class="ebooks-grid">
+                    <!-- dynamic cards -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwt_EgdIgG2hMDAhleQgBgu5DjeXImWtQ",
+            authDomain: "bookpass-4aff4.firebaseapp.com",
+            projectId: "bookpass-4aff4",
+            storageBucket: "bookpass-4aff4.firebasestorage.app",
+            messagingSenderId: "833394499791",
+            appId: "1:833394499791:web:6666de0f66162f85a017ba",
+            measurementId: "G-YVCKSHFTY3"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        let allSubjects = [];
+
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = "index.html";
+                return;
+            }
+            loadSubjects();
+            loadEbooks();
+            updateStats();
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut().then(() => window.location.href = 'index.html'));
+
+        // Load distinct subjects from Firestore to populate dropdown
+        async function loadSubjects() {
+            const snapshot = await db.collection('ebooks').get();
+            const subjectsSet = new Set();
+            snapshot.docs.forEach(doc => {
+                const subject = doc.data().subject;
+                if (subject) subjectsSet.add(subject);
+            });
+            allSubjects = Array.from(subjectsSet).sort();
+            const select = document.getElementById('ebookSubjectSelect');
+            select.innerHTML = '<option value="">Select existing subject</option>';
+            allSubjects.forEach(sub => {
+                select.innerHTML += `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`;
+            });
+        }
+
+        // Handle new subject addition
+        const addNewBtn = document.getElementById('addNewSubjectBtn');
+        const newSubjectDiv = document.getElementById('newSubjectInput');
+        const newSubjectInput = document.getElementById('ebookSubjectNew');
+        const cancelNewBtn = document.getElementById('cancelNewSubjectBtn');
+
+        addNewBtn.addEventListener('click', () => {
+            newSubjectDiv.style.display = 'block';
+            addNewBtn.style.display = 'none';
+            newSubjectInput.focus();
+        });
+
+        cancelNewBtn.addEventListener('click', () => {
+            newSubjectDiv.style.display = 'none';
+            addNewBtn.style.display = 'inline-flex';
+            newSubjectInput.value = '';
+        });
+
+        // Upload ebook
+        const uploadForm = document.getElementById('uploadEbookForm');
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let subject;
+            if (newSubjectDiv.style.display === 'block' && newSubjectInput.value.trim()) {
+                subject = newSubjectInput.value.trim();
+            } else {
+                subject = document.getElementById('ebookSubjectSelect').value;
+                if (!subject) {
+                    alert("Please select a subject or add a new one.");
+                    return;
+                }
+            }
+
+            const title = document.getElementById('ebookTitle').value.trim();
+            const author = document.getElementById('ebookAuthor').value.trim();
+            const level = document.getElementById('ebookLevel').value;
+            const description = document.getElementById('ebookDescription').value.trim();
+            const file = document.getElementById('ebookFile').files[0];
+
+            if (!title || !author || !level || !file) {
+                alert("Please fill all required fields and select a PDF.");
+                return;
+            }
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            const progressDiv = document.getElementById('uploadProgress');
+            progressDiv.style.display = 'block';
+            const progressBar = progressDiv.querySelector('progress');
+            const percentSpan = progressDiv.querySelector('span');
+
+            try {
+                const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const fileRef = storage.ref(`ebooks/${fileName}`);
+                const uploadTask = fileRef.put(file);
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const percent = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressBar.value = percent;
+                        percentSpan.textContent = Math.round(percent) + '%';
+                    },
+                    (error) => {
+                        console.error("Upload error:", error);
+                        alert(`Upload failed: ${error.message} (Code: ${error.code})`);
+                        progressDiv.style.display = 'none';
+                        uploadBtn.disabled = false;
+                    },
+                    async () => {
+                        const downloadURL = await fileRef.getDownloadURL();
+                        await db.collection('ebooks').add({
+                            title,
+                            author,
+                            category: subject,    // align with physical books
+                            subject: subject,
+                            level,
+                            description,
+                            fileUrl: downloadURL,
+                            views: 0,
+                            downloads: 0,
+                            uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        alert("E‑book uploaded successfully!");
+                        uploadForm.reset();
+                        progressDiv.style.display = 'none';
+                        // Reset new subject UI
+                        newSubjectDiv.style.display = 'none';
+                        addNewBtn.style.display = 'inline-flex';
+                        newSubjectInput.value = '';
+                        // Reload subjects and lists
+                        await loadSubjects();
+                        loadEbooks();
+                        updateStats();
+                        uploadBtn.disabled = false;
+                    }
+                );
+            } catch (err) {
+                console.error("Outer error:", err);
+                alert("Upload error: " + err.message);
+                progressDiv.style.display = 'none';
+                uploadBtn.disabled = false;
+            }
+        });
+
+        async function loadEbooks() {
+            const container = document.getElementById('ebooksAdminList');
+            container.innerHTML = '<div class="loading">Loading...</div>';
+            let query = db.collection('ebooks').orderBy('uploadedAt', 'desc');
+            const levelFilter = document.getElementById('levelFilter').value;
+            if (levelFilter) query = query.where('level', '==', levelFilter);
+
+            try {
+                const snapshot = await query.get();
+                let books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                const searchTerm = document.getElementById('adminSearch').value.toLowerCase();
+                if (searchTerm) {
+                    books = books.filter(b => 
+                        (b.title && b.title.toLowerCase().includes(searchTerm)) ||
+                        (b.author && b.author.toLowerCase().includes(searchTerm)) ||
+                        (b.subject && b.subject.toLowerCase().includes(searchTerm))
+                    );
+                }
+
+                if (books.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No e‑books found.</div>';
+                    return;
+                }
+
+                container.innerHTML = books.map(book => `
+                    <div class="ebook-card" data-id="${book.id}">
+                        <div class="ebook-info">
+                            <h4>${escapeHtml(book.title)}</h4>
+                            <p><strong>Author:</strong> ${escapeHtml(book.author)}</p>
+                            <p><strong>Subject:</strong> ${escapeHtml(book.subject)}</p>
+                            <p><strong>Level:</strong> ${escapeHtml(book.level)}</p>
+                            <p><strong>Views:</strong> ${book.views || 0} | <strong>Downloads:</strong> ${book.downloads || 0}</p>
+                            ${book.description ? `<p><small>${escapeHtml(book.description)}</small></p>` : ''}
+                        </div>
+                        <div class="ebook-actions">
+                            <a href="${book.fileUrl}" target="_blank" class="btn-secondary btn-sm" onclick="incrementView('${book.id}')">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            <a href="${book.fileUrl}" download class="btn-secondary btn-sm" onclick="incrementDownload('${book.id}')">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                            <button class="btn-danger btn-sm" onclick="deleteEbook('${book.id}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Error loading ebooks:", err);
+                container.innerHTML = `<div class="empty-state">Error loading: ${err.message}</div>`;
+            }
+        }
+
+        window.incrementView = async (id) => {
+            try {
+                await db.collection('ebooks').doc(id).update({ views: firebase.firestore.FieldValue.increment(1) });
+                updateStats();
+            } catch (err) { console.error(err); }
+        };
+
+        window.incrementDownload = async (id) => {
+            try {
+                await db.collection('ebooks').doc(id).update({ downloads: firebase.firestore.FieldValue.increment(1) });
+                updateStats();
+            } catch (err) { console.error(err); }
+        };
+
+        window.deleteEbook = async (id) => {
+            if (!confirm("Delete this e‑book permanently?")) return;
+            try {
+                await db.collection('ebooks').doc(id).delete();
+                loadEbooks();
+                updateStats();
+                loadSubjects(); // refresh subject list
+            } catch (err) {
+                alert("Delete failed: " + err.message);
+            }
+        };
+
+        async function updateStats() {
+            try {
+                const snapshot = await db.collection('ebooks').get();
+                const books = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (books.length === 0) {
+                    document.getElementById('mostViewedBook').innerText = "No books";
+                    document.getElementById('mostDownloadedBook').innerText = "No books";
+                    return;
+                }
+                const mostViewed = books.reduce((prev, curr) => (curr.views > prev.views ? curr : prev), books[0]);
+                const mostDownloaded = books.reduce((prev, curr) => (curr.downloads > prev.downloads ? curr : prev), books[0]);
+                document.getElementById('mostViewedBook').innerHTML = `<strong>${escapeHtml(mostViewed.title)}</strong> (${mostViewed.views} views)`;
+                document.getElementById('mostDownloadedBook').innerHTML = `<strong>${escapeHtml(mostDownloaded.title)}</strong> (${mostDownloaded.downloads} downloads)`;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.getElementById('levelFilter').addEventListener('change', loadEbooks);
+        document.getElementById('adminSearch').addEventListener('input', loadEbooks);
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+    </script>
+</body>
+</html>

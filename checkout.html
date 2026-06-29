@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Out - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        .checkout-container {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 20px;
+        }
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .form-card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .search-box {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .book-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .book-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .book-item:hover {
+            background: #e9ecef;
+        }
+        .book-item.selected {
+            background: #d4edda;
+            border-left: 4px solid #27ae60;
+        }
+        .book-item-image {
+            width: 60px;
+            height: 80px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .book-item-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+        .book-item-info {
+            flex: 1;
+        }
+        .book-item-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+        .book-item-info p {
+            margin: 0;
+            font-size: 12px;
+            color: #666;
+        }
+        .book-item-action {
+            font-size: 24px;
+            color: #4caf50;
+        }
+        .selected-books-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .selected-book-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .selected-book-image {
+            width: 50px;
+            height: 70px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .selected-book-info {
+            flex: 1;
+        }
+        .selected-book-info h5 {
+            margin: 0 0 3px 0;
+            font-size: 13px;
+        }
+        .selected-book-info p {
+            margin: 0;
+            font-size: 11px;
+            color: #666;
+        }
+        .book-quantity-group {
+            margin-top: 5px;
+        }
+        .book-quantity-group label {
+            font-size: 11px;
+            margin-right: 5px;
+        }
+        .book-quantity-group input {
+            width: 60px;
+            padding: 4px;
+            font-size: 12px;
+        }
+        .qty-hint {
+            font-size: 10px;
+            color: #999;
+            margin-left: 5px;
+        }
+        .remove-book-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+        }
+        .checkout-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-primary, .btn-secondary {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .success-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .success-content i {
+            font-size: 60px;
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+        .notification.success {
+            background: #27ae60;
+            color: white;
+        }
+        .notification.error {
+            background: #e74c3c;
+            color: white;
+        }
+        .notification.info {
+            background: #3498db;
+            color: white;
+        }
+        .notification.warning {
+            background: #f39c12;
+            color: white;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .rfid-option-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .rfid-status-badge {
+            padding: 8px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .rfid-status-badge.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .rfid-status-badge.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .rfid-scan-area {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .rfid-scan-area.waiting-scan {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .student-info-card {
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 20px;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            .checkout-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar-nav" id="sidebarNav">
+        <a href="dashboard.html" class="sidebar-brand">
+            <i class="fas fa-book-open"></i>
+            <h1>BookPass</h1>
+        </a>
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="inventory.html"><i class="fas fa-book"></i> Inventory</a></li>
+            <li class="active"><a href="checkout.html"><i class="fas fa-hand-holding"></i> Check Out</a></li>
+            <li><a href="checkin.html"><i class="fas fa-undo"></i> Check In</a></li>
+            <li><a href="analytics.html"><i class="fas fa-chart-line"></i> Analytics</a></li>
+            <li><a href="admin.html"><i class="fas fa-cog"></i> Admin</a></li>
+            <li><a href="about.html"><i class="fas fa-info-circle"></i> About</a></li>
+            <li><a href="update-status.html"><i class="fas fa-sync-alt"></i> Update Status</a></li>
+            <li><a href="contact.html"><i class="fas fa-headset"></i> Support</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <button id="sidebarToggleBtn" class="navbar-toggle-btn" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1>Check Out Books</h1>
+        </header>
+
+        <div id="checkoutContainer" class="checkout-container">
+            <div class="checkout-form-section">
+                <div class="form-card">
+                    <h2>Borrower Information</h2>
+                    
+                    <div class="form-group">
+                        <label>Borrower Type *</label>
+                        <select id="borrowerType">
+                            <option value="">Select Type</option>
+                            <option value="student">Student</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="class-monitor">Class Monitor</option>
+                        </select>
+                    </div>
+
+                    <!-- Student Section -->
+                    <div id="studentSection" style="display: none;">
+                        <div class="form-group">
+                            <label>Identification Method</label>
+                            <div style="display: flex; gap: 15px;">
+                                <label><input type="radio" name="studentMethod" value="manual" checked> Manual Entry</label>
+                                <label><input type="radio" name="studentMethod" value="rfid"> RFID Card</label>
+                            </div>
+                        </div>
+                        <div id="manualStudentSection">
+                            <div class="form-group"><label>Student Name *</label><input type="text" id="studentName" placeholder="Enter full name"></div>
+                            <div class="form-group"><label>Student ID *</label><input type="text" id="studentId" placeholder="Enter Student ID"></div>
+                        </div>
+                        <div id="rfidStudentSection" style="display: none;">
+                            <div class="rfid-option-panel">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <strong><i class="fas fa-rss"></i> RFID Scanner</strong>
+                                    <button type="button" id="connectRfidBtn" class="btn-secondary" style="background: white; color: #667eea; padding: 5px 12px;"><i class="fas fa-plug"></i> Connect</button>
+                                </div>
+                                <div id="rfidStatus" class="rfid-status-badge disconnected"><i class="fas fa-circle"></i> Not Connected</div>
+                                <div id="rfidScanArea" style="display: none;">
+                                    <div class="rfid-scan-area waiting-scan">
+                                        <i class="fas fa-qrcode"></i> Scan Student RFID Card
+                                        <div id="scannedCardUid" style="display: none;"><i class="fas fa-id-card"></i> UID: <span id="scannedUidText"></span></div>
+                                    </div>
+                                </div>
+                                <div id="scannedStudentInfo" style="display: none;" class="student-info-card">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <div><strong id="scannedStudentName"></strong><br><small id="scannedStudentId"></small></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Teacher Section -->
+                    <div id="teacherSection" style="display: none;">
+                        <div class="form-group"><label>Teacher Name *</label><input type="text" id="teacherName" placeholder="Enter full name"></div>
+                        <div class="form-group"><label>Teacher ID *</label><input type="text" id="teacherId" placeholder="Enter Teacher ID"></div>
+                    </div>
+
+                    <!-- Class Monitor Section -->
+                    <div id="classMonitorSection" style="display: none;">
+                        <div class="form-group">
+                            <label>Select Class Monitor *</label>
+                            <select id="classMonitorSelect"><option value="">Loading monitors...</option></select>
+                        </div>
+                        <div id="selectedMonitorInfo" style="display: none;" class="student-info-card">
+                            <i class="fas fa-users"></i>
+                            <div><strong id="monitorName"></strong><br><small id="monitorId"></small><small id="monitorClass"></small></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group"><label>Due Date *</label><input type="date" id="dueDate"></div>
+                    <div class="form-group"><label>Notes</label><textarea id="notes" rows="2" placeholder="Additional notes..."></textarea></div>
+                </div>
+            </div>
+
+            <div class="book-selection-section">
+                <div class="form-card">
+                    <h2>Select Books</h2>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="bookSearch" placeholder="Search books by title or author...">
+                    </div>
+                    <div id="booksList" class="book-list"><div class="loading">Loading books...</div></div>
+                    <div>
+                        <h3>Selected Books (<span id="selectedCount">0</span>)</h3>
+                        <div id="selectedBooksList" class="selected-books-list"></div>
+                    </div>
+                    <div class="checkout-actions">
+                        <button type="button" class="btn-secondary" onclick="clearSelection()"><i class="fas fa-times"></i> Clear</button>
+                        <button type="button" id="checkoutBtn" class="btn-primary" disabled><i class="fas fa-check"></i> Process Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="successModal" style="display: none;" class="success-message">
+            <div class="success-content">
+                <i class="fas fa-check-circle"></i>
+                <h3>Checkout Successful!</h3>
+                <p id="successMsg"></p>
+                <button onclick="location.reload()" class="btn-primary">New Checkout</button>
+            </div>
+        </div>
+    </main>
+
+    <audio id="beepSound" preload="auto">
+        <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwt_EgdIgG2hMDAhleQgBgu5DjeXImWtQ",
+            authDomain: "bookpass-4aff4.firebaseapp.com",
+            projectId: "bookpass-4aff4",
+            storageBucket: "bookpass-4aff4.firebasestorage.app",
+            messagingSenderId: "833394499791",
+            appId: "1:833394499791:web:6666de0f66162f85a017ba"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // Global variables
+        let allBooks = [];
+        let selectedBooks = [];
+        let classMonitors = [];
+        let rfidPort, rfidReader;
+        let isRfidConnected = false;
+        let currentScannedStudent = null;
+        
+        auth.onAuthStateChanged(function(user) {
+            if (!user) window.location.href = "index.html";
+            else { loadBooks(); loadClassMonitors(); setDefaultDueDate(); }
+        });
+        
+        function setDefaultDueDate() {
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+            document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+        }
+        
+        async function loadClassMonitors() {
+            try {
+                const snapshot = await db.collection('classCaptains').get();
+                classMonitors = [];
+                snapshot.forEach(doc => classMonitors.push({ id: doc.id, ...doc.data() }));
+                const select = document.getElementById('classMonitorSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">Select a class monitor...</option>';
+                    classMonitors.forEach(monitor => {
+                        const option = document.createElement('option');
+                        option.value = monitor.id;
+                        option.textContent = `${monitor.name} - ${monitor.className || 'No Class'} (ID: ${monitor.studentId})`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) { console.error('Error loading monitors:', error); }
+        }
+        
+        async function loadBooks() {
+            const container = document.getElementById('booksList');
+            container.innerHTML = '<div class="loading">Loading books...</div>';
+            try {
+                const snapshot = await db.collection('books').get();
+                allBooks = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const available = data.availableCopies !== undefined ? data.availableCopies : (data.copies || 1);
+                    if (available > 0) {
+                        allBooks.push({
+                            id: doc.id, title: data.title || 'Untitled', author: data.author || 'Unknown',
+                            copies: data.copies || 1, availableCopies: available, coverUrl: data.coverUrl || null
+                        });
+                    }
+                });
+                displayBooks();
+            } catch (error) {
+                container.innerHTML = '<div class="loading">Error loading books</div>';
+            }
+        }
+        
+        function displayBooks() {
+            const container = document.getElementById('booksList');
+            const searchTerm = document.getElementById('bookSearch')?.value.toLowerCase() || '';
+            let filtered = allBooks.filter(b => 
+                (b.title.toLowerCase().includes(searchTerm) || b.author.toLowerCase().includes(searchTerm))
+            );
+            if (filtered.length === 0) { container.innerHTML = '<div class="loading">No books found</div>'; return; }
+            
+            container.innerHTML = filtered.map(book => `
+                <div class="book-item ${selectedBooks.some(b => b.id === book.id) ? 'selected' : ''}" onclick="toggleBook('${book.id}')">
+                    <div class="book-item-image">${book.coverUrl ? `<img src="${book.coverUrl}" onerror="this.src='images/book.png'">` : '<i class="fas fa-book" style="font-size:30px;color:#999;"></i>'}</div>
+                    <div class="book-item-info"><h4>${escapeHtml(book.title)}</h4><p>by ${escapeHtml(book.author)}</p><small>Available: ${book.availableCopies}</small></div>
+                    <div class="book-item-action"><i class="fas fa-${selectedBooks.some(b => b.id === book.id) ? 'minus-circle' : 'plus-circle'}"></i></div>
+                </div>
+            `).join('');
+        }
+        
+        window.toggleBook = function(bookId) {
+            const book = allBooks.find(b => b.id === bookId);
+            if (!book) return;
+            const index = selectedBooks.findIndex(b => b.id === bookId);
+            if (index >= 0) selectedBooks.splice(index, 1);
+            else selectedBooks.push({ id: book.id, title: book.title, author: book.author, coverUrl: book.coverUrl, availableCopies: book.availableCopies, quantity: 1 });
+            updateSelectedList();
+            displayBooks();
+            updateCheckoutButton();
+        };
+        
+        function updateSelectedList() {
+            const container = document.getElementById('selectedBooksList');
+            const countSpan = document.getElementById('selectedCount');
+            countSpan.textContent = selectedBooks.length;
+            if (selectedBooks.length === 0) { container.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">No books selected</div>'; return; }
+            
+            container.innerHTML = selectedBooks.map((book, idx) => `
+                <div class="selected-book-item">
+                    <div class="selected-book-image">${book.coverUrl ? `<img src="${book.coverUrl}" onerror="this.src='images/book.png'">` : '<i class="fas fa-book" style="font-size:24px;color:#999;"></i>'}</div>
+                    <div class="selected-book-info"><h5>${escapeHtml(book.title)}</h5><p>${escapeHtml(book.author)}</p></div>
+                    <button class="remove-book-btn" onclick="removeBook(${idx})"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+        
+        window.removeBook = function(index) { selectedBooks.splice(index, 1); updateSelectedList(); displayBooks(); updateCheckoutButton(); };
+        window.clearSelection = function() { selectedBooks = []; updateSelectedList(); displayBooks(); updateCheckoutButton(); };
+        
+        function validateBorrower() {
+            const type = document.getElementById('borrowerType').value;
+            if (type === 'student') {
+                const method = document.querySelector('input[name="studentMethod"]:checked')?.value;
+                if (method === 'rfid') return currentScannedStudent !== null;
+                else return document.getElementById('studentName').value.trim() !== "" && document.getElementById('studentId').value.trim() !== "";
+            } else if (type === 'teacher') {
+                return document.getElementById('teacherName').value.trim() !== "" && document.getElementById('teacherId').value.trim() !== "";
+            } else if (type === 'class-monitor') {
+                return document.getElementById('classMonitorSelect').value !== "";
+            }
+            return false;
+        }
+        
+        function updateCheckoutButton() {
+            const btn = document.getElementById('checkoutBtn');
+            if (btn) btn.disabled = !(selectedBooks.length > 0 && validateBorrower());
+        }
+        
+        // Event Listeners
+        document.getElementById('borrowerType').addEventListener('change', function() {
+            const val = this.value;
+            document.getElementById('studentSection').style.display = val === 'student' ? 'block' : 'none';
+            document.getElementById('teacherSection').style.display = val === 'teacher' ? 'block' : 'none';
+            document.getElementById('classMonitorSection').style.display = val === 'class-monitor' ? 'block' : 'none';
+            selectedBooks = []; updateSelectedList(); displayBooks(); updateCheckoutButton();
+        });
+        
+        document.querySelectorAll('input[name="studentMethod"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('manualStudentSection').style.display = this.value === 'manual' ? 'block' : 'none';
+                document.getElementById('rfidStudentSection').style.display = this.value === 'rfid' ? 'block' : 'none';
+                updateCheckoutButton();
+            });
+        });
+        
+        document.getElementById('classMonitorSelect').addEventListener('change', () => updateCheckoutButton());
+        ['studentName', 'studentId', 'teacherName', 'teacherId'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', () => updateCheckoutButton());
+        });
+        document.getElementById('bookSearch').addEventListener('input', () => displayBooks());
+        
+        async function processCheckout() {
+            const type = document.getElementById('borrowerType').value;
+            const dueDate = document.getElementById('dueDate').value;
+            const notes = document.getElementById('notes').value;
+            
+            let borrower = {};
+            if (type === 'student') {
+                const method = document.querySelector('input[name="studentMethod"]:checked')?.value;
+                if (method === 'rfid' && currentScannedStudent) {
+                    borrower = { type: 'student', name: currentScannedStudent.name, id: currentScannedStudent.studentId };
+                } else {
+                    borrower = { type: 'student', name: document.getElementById('studentName').value.trim(), id: document.getElementById('studentId').value.trim() };
+                }
+            } else if (type === 'teacher') {
+                borrower = { type: 'teacher', name: document.getElementById('teacherName').value.trim(), id: document.getElementById('teacherId').value.trim() };
+            } else if (type === 'class-monitor') {
+                const monitorId = document.getElementById('classMonitorSelect').value;
+                const monitor = classMonitors.find(m => m.id === monitorId);
+                if (monitor) borrower = { type: 'class-monitor', name: monitor.name, id: monitor.studentId, monitorId: monitor.id, className: monitor.className };
+            }
+            
+            if (!borrower.name || !borrower.id) { showNotification('Please complete borrower information', 'error'); return; }
+            
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            checkoutBtn.disabled = true;
+            checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            try {
+                for (const book of selectedBooks) {
+                    const quantity = book.quantity || 1;
+                    const checkoutData = {
+                        borrower: borrower,
+                        borrowerType: type,
+                        borrowerName: borrower.name,
+                        borrowerID: borrower.id,
+                        bookId: book.id,
+                        bookTitle: book.title,
+                        bookAuthor: book.author,
+                        quantity: quantity,
+                        dueDate: dueDate,
+                        notes: notes,
+                        checkoutDate: new Date().toISOString(),
+                        returned: false,
+                        transactionId: 'TXN-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6)
+                    };
+                    
+                    await db.collection('checkouts').add(checkoutData);
+                    
+                    const bookRef = db.collection('books').doc(book.id);
+                    const bookDoc = await bookRef.get();
+                    const currentAvailable = bookDoc.data().availableCopies;
+                    await bookRef.update({ availableCopies: currentAvailable - quantity });
+                }
+                
+                document.getElementById('successMsg').innerHTML = `${selectedBooks.length} book(s) checked out to ${escapeHtml(borrower.name)}<br>Due: ${dueDate}`;
+                document.getElementById('checkoutContainer').style.display = 'none';
+                document.getElementById('successModal').style.display = 'block';
+                playBeep();
+                showNotification('Checkout completed successfully!', 'success');
+            } catch (error) {
+                showNotification('Checkout failed: ' + error.message, 'error');
+            } finally {
+                checkoutBtn.disabled = false;
+                checkoutBtn.innerHTML = '<i class="fas fa-check"></i> Process Checkout';
+            }
+        }
+        
+        // RFID Functions
+        async function connectScanner() {
+            try {
+                rfidPort = await navigator.serial.requestPort();
+                await rfidPort.open({ baudRate: 115200 });
+                isRfidConnected = true;
+                const decoder = new TextDecoderStream();
+                rfidPort.readable.pipeTo(decoder.writable);
+                rfidReader = decoder.readable.getReader();
+                readSerial();
+                document.getElementById('rfidScanArea').style.display = 'block';
+                document.getElementById('rfidStatus').className = 'rfid-status-badge connected';
+                document.getElementById('rfidStatus').innerHTML = '<i class="fas fa-circle"></i> Connected & Ready';
+                playBeep();
+            } catch (error) { showNotification('Failed to connect: ' + error.message, 'error'); }
+        }
+        
+        async function readSerial() {
+            try {
+                while (true) {
+                    const { value, done } = await rfidReader.read();
+                    if (done) break;
+                    if (value && value.trim()) {
+                        const uid = value.trim();
+                        const studentDoc = await db.collection('rfidStudents').doc(uid).get();
+                        if (studentDoc.exists) {
+                            currentScannedStudent = { uid, ...studentDoc.data() };
+                            document.getElementById('studentName').value = currentScannedStudent.name;
+                            document.getElementById('studentId').value = currentScannedStudent.studentId;
+                            document.getElementById('scannedStudentName').innerHTML = escapeHtml(currentScannedStudent.name);
+                            document.getElementById('scannedStudentId').innerHTML = `ID: ${currentScannedStudent.studentId}`;
+                            document.getElementById('scannedStudentInfo').style.display = 'flex';
+                            showNotification(`Welcome ${currentScannedStudent.name}!`, 'success');
+                        } else {
+                            showNotification('Unknown RFID card. Please register in Admin panel.', 'warning');
+                        }
+                        updateCheckoutButton();
+                    }
+                }
+            } catch (error) { console.error('Read error:', error); }
+        }
+        
+        document.getElementById('connectRfidBtn')?.addEventListener('click', connectScanner);
+        document.getElementById('checkoutBtn')?.addEventListener('click', processCheckout);
+        document.getElementById('logoutBtn')?.addEventListener('click', () => auth.signOut().then(() => window.location.href = 'index.html'));
+        
+        function playBeep() { document.getElementById('beepSound')?.play().catch(() => {}); }
+        function showNotification(msg, type) {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        
+        window.toggleBook = toggleBook;
+        window.removeBook = removeBook;
+        window.clearSelection = clearSelection;
+    </script>
+    <script src="scripts/navigation.js"></script>
+    <script src="scripts/syncCoordinator.js"></script>
+    <script>
+        // ============================================
+        // OFFLINE MODE AND AUTO-SYNC SETUP
+        // ============================================
+        
+        // Handle connection restoration - trigger automatic sync
+        window.addEventListener('online', async function() {
+            console.log('📡 Connection restored on Check-Out page');
+            showNotification('Connection restored - syncing offline transactions...', 'info');
+            
+            // Trigger sync through storage manager
+            if (window.storageManager && window.storageManager.isOnline()) {
+                try {
+                    const result = await window.storageManager.processOfflineActions();
+                    if (result.success > 0) {
+                        showNotification(`Synced ${result.success} offline check-outs to Firebase ✓`, 'success');
+                        // Refresh available books
+                        await loadAvailableBooks();
+                    }
+                    if (result.failed > 0) {
+                        showNotification(`Warning: ${result.failed} check-outs pending sync`, 'warning');
+                    }
+                } catch (error) {
+                    console.error('Sync error:', error);
+                    showNotification('Sync failed - will retry automatically', 'error');
+                }
+            }
+            
+            // Update UI indicators if syncCoordinator is available
+            if (window.syncCoordinator) {
+                window.syncCoordinator.updateAllManagerStatus();
+            }
+        });
+        
+        // Handle connection loss
+        window.addEventListener('offline', function() {
+            console.log('🔴 Connection lost on Check-Out page');
+            showNotification('Connection lost - switched to offline mode', 'warning');
+        });
+        
+        // Setup periodic auto-sync (every 30 seconds when online with pending actions)
+        setInterval(async function() {
+            if (window.storageManager && window.navigator.onLine) {
+                const status = window.storageManager.getOfflineSyncStatus();
+                if (status.hasPendingActions && !status.isOfflineMode) {
+                    try {
+                        const result = await window.storageManager.processOfflineActions();
+                        if (result.success > 0) {
+                            console.log(`Auto-synced ${result.success} check-outs to Firebase`);
+                            await loadAvailableBooks();
+                        }
+                    } catch (error) {
+                        console.error('Auto-sync error:', error);
+                    }
+                }
+            }
+        }, 30000);
+    </script></body>
+</html>

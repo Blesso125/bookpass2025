@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - BookPass</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="icon" type="image/png" href="images/book.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        /* Additional styles for admin panel */
+        .admin-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .admin-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+        .admin-tab:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .admin-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .form-card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            color: #333;
+        }
+        .rfid-scanner-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .rfid-status {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .rfid-status.connected {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        .rfid-status.scanning {
+            background: rgba(255, 193, 7, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .scanned-uid {
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .registration-form {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            color: #333;
+        }
+        .rfid-student-card, .captain-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .student-info h4, .captain-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        .student-info p, .captain-info p {
+            margin: 3px 0;
+            font-size: 13px;
+            color: #666;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .btn-primary, .btn-secondary, .btn-danger, .btn-sm {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 11px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .rfid-uid-code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-badge.overdue {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+        .notification.success {
+            background: #27ae60;
+            color: white;
+        }
+        .notification.error {
+            background: #e74c3c;
+            color: white;
+        }
+        .notification.info {
+            background: #3498db;
+            color: white;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 20px;
+        }
+        .search-box {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        /* Book borrowing details styles */
+        .borrowed-books-list {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+        }
+        .borrowed-book-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+        }
+        .borrowed-book-title {
+            font-weight: 500;
+            color: #333;
+        }
+        .borrowed-book-details {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .borrowed-book-quantity {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        .borrowed-book-due {
+            font-size: 11px;
+            color: #666;
+        }
+        .borrowed-book-due.overdue {
+            color: #e74c3c;
+            font-weight: 500;
+        }
+        .view-details-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .view-details-btn:hover {
+            text-decoration: underline;
+        }
+        .monitor-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+        }
+        .stat {
+            font-size: 12px;
+        }
+        .stat strong {
+            font-size: 16px;
+            color: #667eea;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+            .rfid-student-card, .captain-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            .action-buttons {
+                justify-content: center;
+            }
+            .borrowed-book-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 5px;
+            }
+            .monitor-stats {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar-nav" id="sidebarNav">
+        <a href="dashboard.html" class="sidebar-brand">
+            <i class="fas fa-book-open"></i>
+            <h1>BookPass</h1>
+        </a>
+        
+        <ul class="sidebar-menu" id="sidebarMenu">
+            <li>
+                <a href="dashboard.html">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="inventory.html">
+                    <i class="fas fa-book"></i>
+                    Inventory
+                </a>
+            </li>
+            <li>
+                <a href="checkout.html">
+                    <i class="fas fa-hand-holding"></i>
+                    Check Out
+                </a>
+            </li>
+            <li>
+                <a href="checkin.html">
+                    <i class="fas fa-undo"></i>
+                    Check In
+                </a>
+            </li>
+            <li>
+                <a href="analytics.html">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+            </li>
+            <li class="active">
+                <a href="admin.html">
+                    <i class="fas fa-cog"></i>
+                    Admin
+                </a>
+            </li>
+            <li>
+                <a href="about.html">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+            </li>
+            <li>
+                <a href="update-status.html">
+                    <i class="fas fa-sync-alt"></i>
+                    Update Status
+                </a>
+            </li>
+            <li>
+                <a href="contact.html">
+                    <i class="fas fa-headset"></i>
+                    Support
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div style="padding: 20px; display: flex; align-items: center; gap: 15px;">
+            <button id="sidebarToggleBtn" class="navbar-toggle-btn" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h2 style="margin: 0; font-size: 1.8rem;">Admin Panel</h2>
+        </div>
+        <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="rfid">
+                <i class="fas fa-rss"></i> RFID Registration
+            </button>
+            <button class="admin-tab" data-tab="captains">
+                <i class="fas fa-users"></i> Class Monitors
+            </button>
+            <button class="admin-tab" data-tab="settings">
+                <i class="fas fa-cog"></i> Settings
+            </button>
+        </div>
+
+        <!-- RFID Registration Tab -->
+        <div id="rfidTab" class="tab-content active">
+            <div class="form-card">
+                <h2><i class="fas fa-rss"></i> RFID Student Registration</h2>
+                <p>Register RFID cards for students to enable quick checkout</p>
+                
+                <!-- RFID Scanner -->
+                <div class="rfid-scanner-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                        <div>
+                            <i class="fas fa-rss" style="font-size: 1.5em;"></i>
+                            <strong style="margin-left: 10px;">RFID Card Scanner</strong>
+                        </div>
+                        <button id="connectScannerBtn" class="btn-primary" style="background: white; color: #667eea;">
+                            <i class="fas fa-plug"></i> Connect Scanner
+                        </button>
+                    </div>
+                    <div id="scannerStatus" class="rfid-status">
+                        <i class="fas fa-circle"></i> Scanner: Not Connected
+                    </div>
+                    <div id="scanArea" style="display: none;">
+                        <div class="rfid-status scanning">
+                            <i class="fas fa-qrcode"></i> Scan RFID Card
+                            <div id="scannedUidDisplay" class="scanned-uid" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Registration Form -->
+                <div id="registrationForm" class="registration-form" style="display: none;">
+                    <h3>Register Student</h3>
+                    <div class="form-group">
+                        <label>RFID UID</label>
+                        <input type="text" id="rfidUid" readonly style="background: #e9ecef; font-family: monospace;">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Student Name *</label>
+                            <input type="text" id="studentName" placeholder="Full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Student ID *</label>
+                            <input type="text" id="studentIdNumber" placeholder="e.g., STU001">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Grade/Class</label>
+                            <select id="studentGrade">
+                                <option value="">Select Grade</option>
+                                <option value="Form 1A">Form 1A</option>
+                                <option value="Form 1B">Form 1B</option>
+                                <option value="Form 1C">Form 1C</option>
+                                <option value="Form 2A">Form 2A</option>
+                                <option value="Form 2B">Form 2B</option>
+                                <option value="Form 3A">Form 3A</option>
+                                <option value="Form 3B">Form 3B</option>
+                                <option value="Form 4A">Form 4A</option>
+                                <option value="Form 4B">Form 4B</option>
+                                <option value="Form 5A">Form 5A</option>
+                                <option value="Form 6A">Form 6A</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="studentEmail" placeholder="student@school.com">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button id="registerBtn" class="btn-primary">Register Student</button>
+                        <button id="cancelRegisterBtn" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+                
+                <!-- Test Mode -->
+                <div style="margin-top: 20px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                    <details>
+                        <summary style="cursor: pointer;">🧪 Test Mode (No Hardware)</summary>
+                        <div id="testButtons" style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                        <small>Click a name to simulate RFID scan</small>
+                    </details>
+                </div>
+            </div>
+            
+            <!-- Registered Students List -->
+            <div class="form-card">
+                <h2><i class="fas fa-list"></i> Registered RFID Students</h2>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchRfid" placeholder="Search by name, ID, or RFID...">
+                </div>
+                <div id="rfidStudentsList">
+                    <div class="empty-state">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Class Captains Tab -->
+        <div id="captainsTab" class="tab-content">
+            <div class="form-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h2><i class="fas fa-users"></i> Class Monitors</h2>
+                    <button id="addCaptainBtn" class="btn-primary" onclick="openAddCaptainModal()">
+                        <i class="fas fa-plus"></i> Add Monitor
+                    </button>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchCaptain" placeholder="Search by name, ID, or class...">
+                </div>
+                <div id="captainsList">
+                    <div class="empty-state">Loading monitors...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" class="tab-content">
+            <div class="form-card">
+                <h2><i class="fas fa-cog"></i> System Settings</h2>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>Default Loan Period (days)</label>
+                        <input type="number" id="defaultLoanDays" value="14" min="1" max="365">
+                        <small>How many days students can keep books</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Books per Student</label>
+                        <input type="number" id="maxStudentBooks" value="5" min="1" max="20">
+                        <small>Maximum books a student can borrow</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Books per Teacher</label>
+                        <input type="number" id="maxTeacherBooks" value="10" min="1" max="50">
+                        <small>Maximum books a teacher can borrow</small>
+                    </div>
+                </div>
+                <button id="saveSettingsBtn" class="btn-primary">Save Settings</button>
+                <div id="settingsStatus" style="margin-top: 10px; font-size: 0.9em; color: #666;"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Captain Modal (Add/Edit) -->
+    <div id="captainModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="captainModalTitle">Add Class Monitor</h2>
+                <button class="close-btn" onclick="closeCaptainModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editCaptainId">
+                <div class="form-group">
+                    <label>Monitor Name *</label>
+                    <input type="text" id="captainName" class="form-control" placeholder="Full name">
+                </div>
+                <div class="form-group">
+                    <label>Student ID *</label>
+                    <input type="text" id="captainStudentId" class="form-control" placeholder="e.g., STU001">
+                </div>
+                <div class="form-group">
+                    <label>Class Name *</label>
+                    <select id="captainClass" class="form-control">
+                        <option value="">Select Class</option>
+                        <option value="F.1 A">F.1 A</option>
+                        <option value="F.1 B">F.1 B</option>
+                        <option value="F.1 C">F.1 C</option>
+                        <option value="F.2 A">F.2 A</option>
+                        <option value="F.2 B">F.2 B</option>
+                        <option value="F.2 C">F.2 C</option>
+                        <option value="F.3 A">F.3 A</option>
+                        <option value="F.3 B">F.3 B</option>
+                        <option value="F.3 C">F.3 C</option>
+                        <option value="F.4 A">F.4 A</option>
+                        <option value="F.4 B">F.4 B</option>
+                        <option value="F.5 A">F.5 A</option>
+                        <option value="F.5 B">F.5 B</option>
+                        <option value="F.6 A">F.6 A</option>
+                        <option value="F.6 B">F.6 B</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Email (Optional)</label>
+                    <input type="email" id="captainEmail" class="form-control" placeholder="monitor@school.com">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeCaptainModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveCaptain()">Save Monitor</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitor Details Modal (View Borrowed Books) -->
+    <div id="monitorDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="monitorDetailsTitle">Monitor Details</h2>
+                <button class="close-btn" onclick="closeMonitorDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="monitorDetailsContent">
+                <!-- Content will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <audio id="beepSound" preload="auto">
+        <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAwt_EgdIgG2hMDAhleQgBgu5DjeXImWtQ",
+            authDomain: "bookpass-4aff4.firebaseapp.com",
+            projectId: "bookpass-4aff4",
+            storageBucket: "bookpass-4aff4.firebasestorage.app",
+            messagingSenderId: "833394499791",
+            appId: "1:833394499791:web:6666de0f66162f85a017ba"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        
+        // RFID variables
+        let rfidPort, rfidReader;
+        let isConnected = false;
+        let currentScannedUID = null;
+        
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+        document.querySelectorAll('.admin-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tabName}Tab`).classList.add('active');
+                
+                if (tabName === 'rfid') loadRfidStudents();
+                if (tabName === 'captains') loadCaptains();
+                if (tabName === 'settings') loadSettings();
+            });
+        });
+        
+        // Auth check
+        auth.onAuthStateChanged(function(user) {
+            if (!user) {
+                window.location.href = "index.html";
+            } else {
+                console.log("User logged in:", user.email);
+                loadRfidStudents();
+                loadCaptains();
+                loadSettings();
+            }
+        });
+        
+        // ============================================
+        // CLASS CAPTAINS (MONITORS) FUNCTIONS WITH BOOK DETAILS
+        // ============================================
+        
+        // Load all captains with their borrowed books
+        async function loadCaptains() {
+            const container = document.getElementById('captainsList');
+            if (!container) return;
+            
+            container.innerHTML = '<div class="empty-state">Loading monitors...</div>';
+            
+            try {
+                const snapshot = await db.collection('classCaptains').get();
+                const captains = [];
+                snapshot.forEach(doc => {
+                    captains.push({ id: doc.id, ...doc.data() });
+                });
+                
+                if (captains.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No class monitors added yet. Click "Add Monitor" to add one.</div>';
+                    return;
+                }
+                
+                // Get all active checkouts (not returned)
+                const checkoutsSnap = await db.collection('checkouts')
+                    .where('returned', '==', false)
+                    .get();
+                
+                // Get all books for reference
+                const booksSnap = await db.collection('books').get();
+                const booksMap = {};
+                booksSnap.forEach(doc => {
+                    booksMap[doc.id] = doc.data();
+                });
+                
+                // Map borrowed books to captains
+                const captainBorrowedBooks = {};
+                const captainTotalBooks = {};
+                const captainOverdueCount = {};
+                
+                checkoutsSnap.forEach(doc => {
+                    const data = doc.data();
+                    // Check if this checkout is for a class monitor
+                    if (data.borrowerType === 'class-monitor' || 
+                        (data.borrower && data.borrower.type === 'class-monitor') ||
+                        (data.borrowerType === 'class-captain')) {
+                        
+                        const monitorId = data.borrowerID || (data.borrower && data.borrower.monitorId);
+                        if (monitorId) {
+                            if (!captainBorrowedBooks[monitorId]) {
+                                captainBorrowedBooks[monitorId] = [];
+                                captainTotalBooks[monitorId] = 0;
+                                captainOverdueCount[monitorId] = 0;
+                            }
+                            
+                            const quantity = data.quantity || 1;
+                            const book = booksMap[data.bookId];
+                            const dueDate = data.dueDate ? new Date(data.dueDate) : null;
+                            const isOverdue = dueDate && dueDate < new Date() && !data.returned;
+                            
+                            if (isOverdue) captainOverdueCount[monitorId]++;
+                            
+                            for (let i = 0; i < quantity; i++) {
+                                captainBorrowedBooks[monitorId].push({
+                                    bookId: data.bookId,
+                                    bookTitle: data.bookTitle || (book ? book.title : 'Unknown Book'),
+                                    bookAuthor: data.bookAuthor || (book ? book.author : 'Unknown'),
+                                    checkoutDate: data.checkoutDate,
+                                    dueDate: data.dueDate,
+                                    transactionId: data.transactionId,
+                                    checkoutId: doc.id,
+                                    isOverdue: isOverdue
+                                });
+                                captainTotalBooks[monitorId]++;
+                            }
+                        }
+                    }
+                });
+                
+                // Search filter
+                const searchTerm = document.getElementById('searchCaptain')?.value.toLowerCase() || '';
+                let filtered = captains;
+                if (searchTerm) {
+                    filtered = captains.filter(c => 
+                        (c.name && c.name.toLowerCase().includes(searchTerm)) ||
+                        (c.studentId && c.studentId.toLowerCase().includes(searchTerm)) ||
+                        (c.className && c.className.toLowerCase().includes(searchTerm))
+                    );
+                }
+                
+                container.innerHTML = filtered.map(captain => {
+                    const borrowedBooks = captainBorrowedBooks[captain.id] || [];
+                    const totalBorrowed = captainTotalBooks[captain.id] || 0;
+                    const overdueCount = captainOverdueCount[captain.id] || 0;
+                    
+                    // Show last 3 borrowed books as preview
+                    const recentBooks = borrowedBooks.slice(0, 3);
+                    const hasMoreBooks = borrowedBooks.length > 3;
+                    
+                    return `
+                        <div class="captain-card">
+                            <div class="captain-info">
+                                <h4>${escapeHtml(captain.name)}</h4>
+                                <p>📚 ID: ${escapeHtml(captain.studentId)} | Class: ${escapeHtml(captain.className || 'N/A')}</p>
+                                ${captain.email ? `<p>📧 ${escapeHtml(captain.email)}</p>` : ''}
+                                <p><small>Added: ${captain.createdAt ? new Date(captain.createdAt).toLocaleDateString() : 'Recently'}</small></p>
+                            </div>
+                            
+                            <!-- Statistics -->
+                            <div class="monitor-stats">
+                                <div class="stat"><strong>${totalBorrowed}</strong> books borrowed</div>
+                                ${overdueCount > 0 ? `<div class="stat" style="color: #e74c3c;"><strong>${overdueCount}</strong> overdue</div>` : ''}
+                            </div>
+                            
+                            <!-- Borrowed Books Preview -->
+                            ${borrowedBooks.length > 0 ? `
+                                <div class="borrowed-books-list">
+                                    <strong style="font-size: 12px;">Currently Borrowed:</strong>
+                                    ${recentBooks.map(book => `
+                                        <div class="borrowed-book-item">
+                                            <span class="borrowed-book-title">${escapeHtml(book.bookTitle)}</span>
+                                            <div class="borrowed-book-details">
+                                                <span class="borrowed-book-due ${book.isOverdue ? 'overdue' : ''}">
+                                                    Due: ${book.dueDate ? new Date(book.dueDate).toLocaleDateString() : 'N/A'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                    ${hasMoreBooks ? `<div style="font-size: 11px; color: #666; margin-top: 5px;">+${borrowedBooks.length - 3} more books</div>` : ''}
+                                </div>
+                            ` : `
+                                <div class="borrowed-books-list">
+                                    <span style="font-size: 12px; color: #999;">No books currently borrowed</span>
+                                </div>
+                            `}
+                            
+                            <div class="action-buttons">
+                                <button class="btn-secondary btn-sm" onclick="viewMonitorDetails('${captain.id}')">
+                                    <i class="fas fa-eye"></i> View All Books
+                                </button>
+                                <button class="btn-secondary btn-sm" onclick="editCaptain('${captain.id}')">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn-danger btn-sm" onclick="deleteCaptain('${captain.id}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading captains:', error);
+                container.innerHTML = `<div class="empty-state">Error loading monitors: ${error.message}</div>`;
+            }
+        }
+        
+        // View detailed information about a monitor's borrowed books
+        async function viewMonitorDetails(monitorId) {
+            try {
+                // Get monitor info
+                const monitorDoc = await db.collection('classCaptains').doc(monitorId).get();
+                if (!monitorDoc.exists) {
+                    showNotification('Monitor not found', 'error');
+                    return;
+                }
+                
+                const monitor = { id: monitorDoc.id, ...monitorDoc.data() };
+                
+                // Get all checkouts for this monitor
+                const checkoutsSnap = await db.collection('checkouts')
+                    .where('returned', '==', false)
+                    .get();
+                
+                const borrowedBooks = [];
+                let totalQuantity = 0;
+                
+                checkoutsSnap.forEach(doc => {
+                    const data = doc.data();
+                    if ((data.borrowerType === 'class-monitor' || data.borrowerType === 'class-captain') &&
+                        (data.borrowerID === monitorId || (data.borrower && data.borrower.monitorId === monitorId))) {
+                        
+                        const quantity = data.quantity || 1;
+                        totalQuantity += quantity;
+                        
+                        for (let i = 0; i < quantity; i++) {
+                            borrowedBooks.push({
+                                bookId: data.bookId,
+                                bookTitle: data.bookTitle || 'Unknown Book',
+                                bookAuthor: data.bookAuthor || 'Unknown',
+                                checkoutDate: data.checkoutDate,
+                                dueDate: data.dueDate,
+                                transactionId: data.transactionId,
+                                checkoutId: doc.id,
+                                notes: data.notes || ''
+                            });
+                        }
+                    }
+                });
+                
+                // Get historical checkouts (returned)
+                const historySnap = await db.collection('checkouts')
+                    .where('returned', '==', true)
+                    .get();
+                
+                const historyBooks = [];
+                let historyTotal = 0;
+                
+                historySnap.forEach(doc => {
+                    const data = doc.data();
+                    if ((data.borrowerType === 'class-monitor' || data.borrowerType === 'class-captain') &&
+                        (data.borrowerID === monitorId || (data.borrower && data.borrower.monitorId === monitorId))) {
+                        
+                        const quantity = data.quantity || 1;
+                        historyTotal += quantity;
+                        
+                        for (let i = 0; i < quantity; i++) {
+                            historyBooks.push({
+                                bookTitle: data.bookTitle || 'Unknown Book',
+                                checkoutDate: data.checkoutDate,
+                                returnedDate: data.returnedDate || 'Unknown',
+                                transactionId: data.transactionId
+                            });
+                        }
+                    }
+                });
+                
+                // Sort borrowed books by due date (soonest first)
+                borrowedBooks.sort((a, b) => {
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(a.dueDate) - new Date(b.dueDate);
+                });
+                
+                const content = `
+                    <div>
+                        <div style="margin-bottom: 20px;">
+                            <h3>${escapeHtml(monitor.name)}</h3>
+                            <p><strong>Student ID:</strong> ${escapeHtml(monitor.studentId)}</p>
+                            <p><strong>Class:</strong> ${escapeHtml(monitor.className || 'N/A')}</p>
+                            ${monitor.email ? `<p><strong>Email:</strong> ${escapeHtml(monitor.email)}</p>` : ''}
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h4>📚 Currently Borrowed (${borrowedBooks.length} books)</h4>
+                            ${borrowedBooks.length > 0 ? `
+                                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Book Title</th>
+                                            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Due Date</th>
+                                            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${borrowedBooks.map(book => {
+                                            const isOverdue = book.dueDate && new Date(book.dueDate) < new Date();
+                                            return `
+                                                <tr>
+                                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(book.bookTitle)}</td>
+                                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${book.dueDate ? new Date(book.dueDate).toLocaleDateString() : 'N/A'}</td>
+                                                    <td style="padding: 8px; border-bottom: 1px solid #eee;">
+                                                        <span class="status-badge ${isOverdue ? 'overdue' : 'active'}">
+                                                            ${isOverdue ? 'Overdue' : 'Active'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            ` : '<p style="color: #999;">No books currently borrowed</p>'}
+                        </div>
+                        
+                        <div>
+                            <h4>📜 Borrowing History (${historyBooks.length} total checkouts)</h4>
+                            ${historyBooks.length > 0 ? `
+                                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Book Title</th>
+                                            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Checkout Date</th>
+                                            <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Returned Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${historyBooks.slice(0, 10).map(book => `
+                                            <tr>
+                                                <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(book.bookTitle)}</td>
+                                                <td style="padding: 8px; border-bottom: 1px solid #eee;">${book.checkoutDate ? new Date(book.checkoutDate).toLocaleDateString() : 'N/A'}</td>
+                                                <td style="padding: 8px; border-bottom: 1px solid #eee;">${book.returnedDate ? new Date(book.returnedDate).toLocaleDateString() : 'N/A'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                                ${historyBooks.length > 10 ? `<p style="font-size: 12px; color: #666; margin-top: 10px;">+${historyBooks.length - 10} more records</p>` : ''}
+                            ` : '<p style="color: #999;">No borrowing history</p>'}
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('monitorDetailsTitle').innerText = `${escapeHtml(monitor.name)} - Borrowing Details`;
+                document.getElementById('monitorDetailsContent').innerHTML = content;
+                document.getElementById('monitorDetailsModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Error loading monitor details:', error);
+                showNotification('Error loading monitor details', 'error');
+            }
+        }
+        
+        function closeMonitorDetailsModal() {
+            document.getElementById('monitorDetailsModal').style.display = 'none';
+        }
+        
+        // Open modal to add new captain
+        function openAddCaptainModal() {
+            document.getElementById('captainModalTitle').innerText = 'Add Class Monitor';
+            document.getElementById('editCaptainId').value = '';
+            document.getElementById('captainName').value = '';
+            document.getElementById('captainStudentId').value = '';
+            document.getElementById('captainClass').value = '';
+            document.getElementById('captainEmail').value = '';
+            document.getElementById('captainModal').style.display = 'flex';
+        }
+        
+        // Open modal to edit existing captain
+        async function editCaptain(captainId) {
+            try {
+                const doc = await db.collection('classCaptains').doc(captainId).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById('captainModalTitle').innerText = 'Edit Class Monitor';
+                    document.getElementById('editCaptainId').value = captainId;
+                    document.getElementById('captainName').value = data.name || '';
+                    document.getElementById('captainStudentId').value = data.studentId || '';
+                    document.getElementById('captainClass').value = data.className || '';
+                    document.getElementById('captainEmail').value = data.email || '';
+                    document.getElementById('captainModal').style.display = 'flex';
+                } else {
+                    showNotification('Monitor not found', 'error');
+                }
+            } catch (error) {
+                console.error('Error editing captain:', error);
+                showNotification('Error loading monitor details', 'error');
+            }
+        }
+        
+        // Save captain (add or update)
+        async function saveCaptain() {
+            const id = document.getElementById('editCaptainId').value;
+            const name = document.getElementById('captainName').value.trim();
+            const studentId = document.getElementById('captainStudentId').value.trim();
+            const className = document.getElementById('captainClass').value;
+            const email = document.getElementById('captainEmail').value.trim();
+            
+            if (!name || !studentId || !className) {
+                showNotification('Please fill all required fields', 'error');
+                return;
+            }
+            
+            // Check for duplicate student ID
+            const existingSnapshot = await db.collection('classCaptains').where('studentId', '==', studentId).get();
+            if (!id && !existingSnapshot.empty) {
+                showNotification('A monitor with this Student ID already exists', 'error');
+                return;
+            }
+            if (id) {
+                const duplicateCheck = existingSnapshot.docs.find(doc => doc.id !== id);
+                if (duplicateCheck) {
+                    showNotification('A monitor with this Student ID already exists', 'error');
+                    return;
+                }
+            }
+            
+            const data = {
+                name: name,
+                studentId: studentId,
+                className: className,
+                email: email,
+                updatedAt: new Date().toISOString()
+            };
+            
+            try {
+                if (id) {
+                    // Update existing captain
+                    await db.collection('classCaptains').doc(id).update(data);
+                    showNotification('Monitor updated successfully!', 'success');
+                } else {
+                    // Add new captain
+                    data.createdAt = new Date().toISOString();
+                    await db.collection('classCaptains').add(data);
+                    showNotification('Monitor added successfully!', 'success');
+                }
+                closeCaptainModal();
+                loadCaptains(); // Refresh the list
+            } catch (error) {
+                console.error('Error saving captain:', error);
+                showNotification('Error saving monitor: ' + error.message, 'error');
+            }
+        }
+        
+        // Delete captain
+        async function deleteCaptain(captainId) {
+            // Check if captain has active checkouts
+            const checkoutsSnap = await db.collection('checkouts')
+                .where('borrowerType', 'in', ['class-captain', 'class-monitor'])
+                .where('borrowerID', '==', captainId)
+                .where('returned', '==', false)
+                .get();
+            
+            if (!checkoutsSnap.empty) {
+                showNotification('Cannot delete monitor with active book checkouts', 'error');
+                return;
+            }
+            
+            if (confirm('Delete this monitor permanently?')) {
+                try {
+                    await db.collection('classCaptains').doc(captainId).delete();
+                    showNotification('Monitor deleted successfully', 'success');
+                    loadCaptains();
+                } catch (error) {
+                    console.error('Error deleting captain:', error);
+                    showNotification('Error deleting monitor: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        function closeCaptainModal() {
+            document.getElementById('captainModal').style.display = 'none';
+        }
+        
+        // ============================================
+        // SETTINGS FUNCTIONS
+        // ============================================
+        async function loadSettings() {
+            const statusDiv = document.getElementById('settingsStatus');
+            if (statusDiv) statusDiv.innerHTML = 'Loading settings...';
+            
+            try {
+                const settingsDoc = await db.collection('systemSettings').doc('loanSettings').get();
+                
+                const loanDaysInput = document.getElementById('defaultLoanDays');
+                const studentBooksInput = document.getElementById('maxStudentBooks');
+                const teacherBooksInput = document.getElementById('maxTeacherBooks');
+                
+                if (settingsDoc.exists) {
+                    const settings = settingsDoc.data();
+                    if (loanDaysInput) loanDaysInput.value = settings.defaultLoanDays || 14;
+                    if (studentBooksInput) studentBooksInput.value = settings.maxStudentBooks || 5;
+                    if (teacherBooksInput) teacherBooksInput.value = settings.maxTeacherBooks || 10;
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color: green;">✓ Settings loaded from database</span>';
+                } else {
+                    if (loanDaysInput) loanDaysInput.value = 14;
+                    if (studentBooksInput) studentBooksInput.value = 5;
+                    if (teacherBooksInput) teacherBooksInput.value = 10;
+                    if (statusDiv) statusDiv.innerHTML = '<span style="color: orange;">⚠ Using default settings. Click Save to store in database.</span>';
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                if (statusDiv) statusDiv.innerHTML = '<span style="color: red;">Error loading settings: ' + error.message + '</span>';
+            }
+        }
+        
+        async function saveSettings() {
+            const defaultLoanDays = parseInt(document.getElementById('defaultLoanDays')?.value) || 14;
+            const maxStudentBooks = parseInt(document.getElementById('maxStudentBooks')?.value) || 5;
+            const maxTeacherBooks = parseInt(document.getElementById('maxTeacherBooks')?.value) || 10;
+            
+            const saveBtn = document.getElementById('saveSettingsBtn');
+            const originalText = saveBtn?.innerHTML || 'Save Settings';
+            if (saveBtn) {
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                saveBtn.disabled = true;
+            }
+            
+            try {
+                const settingsData = {
+                    defaultLoanDays: defaultLoanDays,
+                    maxStudentBooks: maxStudentBooks,
+                    maxTeacherBooks: maxTeacherBooks,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: auth.currentUser?.email || 'admin'
+                };
+                
+                await db.collection('systemSettings').doc('loanSettings').set(settingsData);
+                
+                showNotification('Settings saved successfully!', 'success');
+                const statusDiv = document.getElementById('settingsStatus');
+                if (statusDiv) statusDiv.innerHTML = '<span style="color: green;">✓ Settings saved to database</span>';
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showNotification('Error saving settings: ' + error.message, 'error');
+            } finally {
+                if (saveBtn) {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                }
+            }
+        }
+        
+        // ============================================
+        // RFID SCANNER FUNCTIONS
+        // ============================================
+        async function connectScanner() {
+            try {
+                rfidPort = await navigator.serial.requestPort();
+                await rfidPort.open({ baudRate: 115200 });
+                isConnected = true;
+                updateScannerStatus(true);
+                
+                const decoder = new TextDecoderStream();
+                rfidPort.readable.pipeTo(decoder.writable);
+                rfidReader = decoder.readable.getReader();
+                readSerial();
+                
+                document.getElementById('scanArea').style.display = 'block';
+                playBeep();
+                showNotification('RFID Scanner Connected!', 'success');
+            } catch (error) {
+                showNotification('Failed to connect: ' + error.message, 'error');
+                updateScannerStatus(false);
+            }
+        }
+        
+        async function readSerial() {
+            try {
+                while (true) {
+                    const { value, done } = await rfidReader.read();
+                    if (done) break;
+                    if (value && value.trim()) {
+                        const uid = value.trim();
+                        await handleRfidScan(uid);
+                    }
+                }
+            } catch (error) {
+                console.error('Read error:', error);
+            }
+        }
+        
+        async function handleRfidScan(uid) {
+            currentScannedUID = uid;
+            const displayDiv = document.getElementById('scannedUidDisplay');
+            displayDiv.textContent = `Scanned: ${uid}`;
+            displayDiv.style.display = 'inline-block';
+            playBeep();
+            
+            const existingDoc = await db.collection('rfidStudents').doc(uid).get();
+            
+            if (existingDoc.exists) {
+                const student = existingDoc.data();
+                document.getElementById('rfidUid').value = uid;
+                document.getElementById('studentName').value = student.name;
+                document.getElementById('studentIdNumber').value = student.studentId;
+                document.getElementById('studentGrade').value = student.grade || '';
+                document.getElementById('studentEmail').value = student.email || '';
+                document.getElementById('registrationForm').style.display = 'block';
+                document.getElementById('registerBtn').textContent = 'Update Student';
+                showNotification(`Card already registered to ${student.name}`, 'info');
+            } else {
+                document.getElementById('rfidUid').value = uid;
+                document.getElementById('studentName').value = '';
+                document.getElementById('studentIdNumber').value = '';
+                document.getElementById('studentGrade').value = '';
+                document.getElementById('studentEmail').value = '';
+                document.getElementById('registrationForm').style.display = 'block';
+                document.getElementById('registerBtn').textContent = 'Register Student';
+                showNotification('New RFID card. Enter student details.', 'info');
+            }
+        }
+        
+        async function registerStudent() {
+            const uid = document.getElementById('rfidUid').value;
+            const name = document.getElementById('studentName').value.trim();
+            const studentId = document.getElementById('studentIdNumber').value.trim();
+            const grade = document.getElementById('studentGrade').value;
+            const email = document.getElementById('studentEmail').value.trim();
+            
+            if (!uid || !name || !studentId) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            try {
+                await db.collection('rfidStudents').doc(uid).set({
+                    name: name,
+                    studentId: studentId,
+                    grade: grade,
+                    email: email,
+                    registeredAt: new Date().toISOString(),
+                    registeredBy: auth.currentUser?.email || 'admin'
+                });
+                
+                showNotification(`Student ${name} registered!`, 'success');
+                playBeep();
+                
+                document.getElementById('registrationForm').style.display = 'none';
+                document.getElementById('scannedUidDisplay').style.display = 'none';
+                currentScannedUID = null;
+                loadRfidStudents();
+            } catch (error) {
+                showNotification('Error: ' + error.message, 'error');
+            }
+        }
+        
+        function cancelRegistration() {
+            document.getElementById('registrationForm').style.display = 'none';
+            document.getElementById('scannedUidDisplay').style.display = 'none';
+            currentScannedUID = null;
+        }
+        
+        function updateScannerStatus(connected) {
+            const statusDiv = document.getElementById('scannerStatus');
+            const connectBtn = document.getElementById('connectScannerBtn');
+            
+            if (connected) {
+                statusDiv.className = 'rfid-status connected';
+                statusDiv.innerHTML = '<i class="fas fa-circle"></i> Scanner: Ready';
+                connectBtn.innerHTML = '<i class="fas fa-check"></i> Connected';
+                connectBtn.disabled = true;
+            } else {
+                statusDiv.className = 'rfid-status';
+                statusDiv.innerHTML = '<i class="fas fa-circle"></i> Scanner: Not Connected';
+                connectBtn.innerHTML = '<i class="fas fa-plug"></i> Connect Scanner';
+                connectBtn.disabled = false;
+            }
+        }
+        
+        // ============================================
+        // RFID STUDENTS CRUD
+        // ============================================
+        async function loadRfidStudents() {
+            const container = document.getElementById('rfidStudentsList');
+            if (!container) return;
+            
+            container.innerHTML = '<div class="empty-state">Loading...</div>';
+            
+            try {
+                const snapshot = await db.collection('rfidStudents').get();
+                const students = [];
+                snapshot.forEach(doc => {
+                    students.push({ uid: doc.id, ...doc.data() });
+                });
+                
+                if (students.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No RFID students registered. Scan a card to register.</div>';
+                    return;
+                }
+                
+                // Update test buttons
+                const testContainer = document.getElementById('testButtons');
+                if (testContainer) {
+                    testContainer.innerHTML = students.slice(0, 5).map(s => 
+                        `<button class="btn-secondary" style="font-size:0.8em;padding:5px 10px;" onclick="simulateRFID('${s.uid}')">
+                            🆔 ${escapeHtml(s.name)}
+                        </button>`
+                    ).join('');
+                }
+                
+                // Filter
+                const searchTerm = document.getElementById('searchRfid')?.value.toLowerCase() || '';
+                let filtered = students;
+                if (searchTerm) {
+                    filtered = students.filter(s => 
+                        s.name.toLowerCase().includes(searchTerm) ||
+                        s.studentId.toLowerCase().includes(searchTerm) ||
+                        s.uid.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                container.innerHTML = filtered.map(student => `
+                    <div class="rfid-student-card">
+                        <div class="student-info">
+                            <h4>${escapeHtml(student.name)}</h4>
+                            <p>📚 ID: ${escapeHtml(student.studentId)} | Grade: ${student.grade || 'N/A'}</p>
+                            <p>🔑 RFID: <code class="rfid-uid-code">${student.uid}</code></p>
+                            <p>📅 Registered: ${new Date(student.registeredAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn-danger" onclick="deleteRfidStudent('${student.uid}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<div class="empty-state">Error loading students</div>';
+            }
+        }
+        
+        async function deleteRfidStudent(uid) {
+            if (confirm('Remove this student from RFID system?')) {
+                try {
+                    await db.collection('rfidStudents').doc(uid).delete();
+                    showNotification('Student removed', 'success');
+                    loadRfidStudents();
+                } catch (error) {
+                    showNotification('Error: ' + error.message, 'error');
+                }
+            }
+        }
+        
+        function simulateRFID(uid) {
+            handleRfidScan(uid);
+        }
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function playBeep() {
+            const beep = document.getElementById('beepSound');
+            if (beep) beep.play().catch(() => {});
+        }
+        
+        function showNotification(message, type) {
+            const notif = document.createElement('div');
+            notif.className = `notification ${type}`;
+            notif.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        document.getElementById('connectScannerBtn')?.addEventListener('click', connectScanner);
+        document.getElementById('registerBtn')?.addEventListener('click', registerStudent);
+        document.getElementById('cancelRegisterBtn')?.addEventListener('click', cancelRegistration);
+        document.getElementById('addCaptainBtn')?.addEventListener('click', openAddCaptainModal);
+        document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettings);
+        document.getElementById('searchRfid')?.addEventListener('input', () => loadRfidStudents());
+        document.getElementById('searchCaptain')?.addEventListener('input', () => loadCaptains());
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            auth.signOut().then(() => window.location.href = 'index.html');
+        });
+        
+        // Make functions global for onclick handlers
+        window.openAddCaptainModal = openAddCaptainModal;
+        window.editCaptain = editCaptain;
+        window.saveCaptain = saveCaptain;
+        window.deleteCaptain = deleteCaptain;
+        window.closeCaptainModal = closeCaptainModal;
+        window.viewMonitorDetails = viewMonitorDetails;
+        window.closeMonitorDetailsModal = closeMonitorDetailsModal;
+        window.deleteRfidStudent = deleteRfidStudent;
+        window.simulateRFID = simulateRFID;
+        window.saveSettings = saveSettings;
+    </script>
+    <script src="scripts/navigation.js"></script>
+</body>
+</html>
